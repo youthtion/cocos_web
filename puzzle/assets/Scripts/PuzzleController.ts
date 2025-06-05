@@ -146,12 +146,9 @@ export class PuzzleController extends Component {
                     dy -= CELL_WIDTH;
                 }
                 let puzzle_pos = _puzzle.getPosition();
-                if(Math.floor((x - dx) / CELL_WIDTH + (board.length - 1) / 2) < 0 || Math.floor((y - dy) / CELL_WIDTH + (board.length - 1) / 2) < 0 || Math.floor((x - dx) / CELL_WIDTH + (board.length - 1) / 2) > 2 || Math.floor((y - dy) / CELL_WIDTH + (board.length - 1) / 2) > 2){
-                    console.log(puzzle_pos.x + " " + x + " " + dx + " " + puzzle_pos.y + " " + y + " " + dy);
-                }
                 this.fitPuzzlePos = [puzzle_pos.x - dx, puzzle_pos.y - dy];
             }
-            this.fitCells.push([Math.floor((x - dx) / CELL_WIDTH + (board.length - 1) / 2), Math.floor((y - dy) / CELL_WIDTH + (board.length - 1) / 2)]);
+            this.fitCells.push([Math.round((x - dx) / CELL_WIDTH + Math.floor((board.length - 1) / 2)), Math.round((y - dy) / CELL_WIDTH + Math.floor((board.length - 1) / 2))]);
         }
     }
 
