@@ -19,13 +19,21 @@ export class PuzzleController extends Component {
     @property({type:CCFloat, min:0, max:1, step:0.01})
     private cellLightness:number = 0; 
 
-    start()
-    {
-        input.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this); //拼圖移動事件
-        input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);     //拼圖放下事件
-    }
+    start(){}
 
     update(deltaTime: number){}
+
+    setEventsActive(_set:boolean)
+    {
+        if(_set){
+            input.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this); //拼圖移動事件
+            input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);     //拼圖放下事件
+        }
+        else{
+            input.off(Input.EventType.MOUSE_MOVE, this.onMouseMove, this);
+            input.off(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+        }
+    }
 
     //生成拼圖實體
     initPuzzle()

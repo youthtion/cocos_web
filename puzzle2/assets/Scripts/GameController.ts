@@ -24,24 +24,60 @@ export class GameController extends Component {
 
     start()
     {
-        this.puzzleCtrl?.node.on('onFitPuzzle', this.onFitPuzzle, this); //接收拼圖放上棋盤事件
-        this.puzzleCtrl?.node.on('onFallPuzzle', this.onFallPuzzle, this); //接收拼圖放上棋盤事件
-        this.puzzleCtrl?.node.on('onRemovePuzzle', this.onRemovePuzzle, this); //接收拼圖移出棋盤事件
         this.buffCtrl?.node.on('onSetBuffFinish', this.onStartButtonClicked, this);
     }
 
     //初始化單局資訊
     restart()
     {
+        this.setMenuVisible(false); //遊戲進行, 隱藏選單
         //更新棋盤大小並初始化單局資訊
         if(this.stageLabel){
             this.stageLabel.string = 'Stage' + GameModel.getStage();
         }
         this.initBoard();
         this.puzzleCtrl?.initPuzzle();
+        this.puzzleCtrl?.setEventsActive(true);
+        this.setEventsActive(true);
+    }
+
+    pause()
+    {
+        //場間階段, 叫出選單選擇BUFF
+        this.setMenuVisible(true);
+        if(this.btnStart){
+            this.btnStart.active = false;
+        }
+        if(this.titleLabel){
+            this.titleLabel.string = '';
+        }
+        if(this.stageLabel){
+            this.stageLabel.string = '';
+        }
+        this.buffCtrl?.generateBuffList();
+        this.buffCtrl?.showBuffBtn();
+        GameModel.setStage(GameModel.getStage() + 1);
+        GameModel.setCannotRotateBuff(false);
+        GameModel.setGravityBuff(false);
+        this.setEventsActive(false);
+        this.puzzleCtrl?.setEventsActive(false);
     }
 
     update(deltaTime: number){}
+
+    setEventsActive(_set:boolean)
+    {
+        if(_set){
+            this.puzzleCtrl?.node.on('onFitPuzzle', this.onFitPuzzle, this); //接收拼圖放上棋盤事件
+            this.puzzleCtrl?.node.on('onFallPuzzle', this.onFallPuzzle, this); //接收拼圖放上棋盤事件
+            this.puzzleCtrl?.node.on('onRemovePuzzle', this.onRemovePuzzle, this); //接收拼圖移出棋盤事件
+        }
+        else{
+            this.puzzleCtrl?.node.off('onFitPuzzle', this.onFitPuzzle, this);
+            this.puzzleCtrl?.node.off('onFallPuzzle', this.onFallPuzzle, this);
+            this.puzzleCtrl?.node.off('onRemovePuzzle', this.onRemovePuzzle, this);
+        }
+    }
 
     //初始化棋盤資訊
     initBoard()
@@ -270,7 +306,6 @@ export class GameController extends Component {
 
     onStartButtonClicked()
     {
-        this.setMenuVisible(false); //遊戲進行, 隱藏選單
         this.restart();
     }
 
@@ -285,22 +320,7 @@ export class GameController extends Component {
                 }
             }
         }
-        //叫出選單, 顯示勝利資訊
-        this.setMenuVisible(true);
-        if(this.btnStart){
-            this.btnStart.active = false;
-        }
-        if(this.titleLabel){
-            this.titleLabel.string = '';
-        }
-        if(this.stageLabel){
-            this.stageLabel.string = '';
-        }
-        this.buffCtrl?.generateBuffList();
-        this.buffCtrl?.showBuffBtn();
-        GameModel.setStage(GameModel.getStage() + 1);
-        GameModel.setCannotRotateBuff(false);
-        GameModel.setGravityBuff(false);
+        this.pause();
     }
 
     setMenuVisible(_show: boolean)
