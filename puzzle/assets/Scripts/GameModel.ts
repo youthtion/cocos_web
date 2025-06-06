@@ -1,16 +1,20 @@
 import { Color } from 'cc';
-export const CELL_WIDTH = 60;
-export const FIT_ALLOW = 12;
-export const BOARD_COLOR = new Color(64, 64, 64);
-export const ADD_NEAR_RATE = [1.0, 1.0, 1.0, 0.7, 0.5, 0.2]
+export const CELL_WIDTH = 60; //棋盤格長寬
+export const FIT_ALLOW = Math.floor(CELL_WIDTH / 4); //拼圖靠近吸附距離(1/4棋盤格)
+export const BOARD_COLOR = new Color(64, 64, 64); //棋盤顏色
+export const ADD_NEAR_RATE = [1.0, 1.0, 1.0, 0.7, 0.5, 0.3]; //拼圖生成時長為N塊的機率
+export const MAX_BOARD_LENGTH = 10; //最大棋盤大小
 
 export class CGameModel{
-    private boardLength:number = 3;
-    private board:number[][] = [];
-    private puzzles:number[][][] = [];
+    private boardLength:number = 3;    //棋盤大小
+    private board:number[][] = [];     //棋盤資訊(初始為-1填滿, 使用格填入)
+    private puzzles:number[][][] = []; //拼圖資訊([第N個拼圖][第N個CELL][該CELL的x,y])
 
     public setBoardLength(_set:number)
     {
+        if(_set > MAX_BOARD_LENGTH){
+            _set = MAX_BOARD_LENGTH;
+        }
         this.boardLength = _set;
     }
 

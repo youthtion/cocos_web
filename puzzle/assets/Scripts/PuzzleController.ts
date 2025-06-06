@@ -21,70 +21,75 @@ export class PuzzleController extends Component {
 
     start()
     {
-        input.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this);
-        input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+        input.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this); //拼圖移動事件
+        input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);     //拼圖放下事件
     }
 
     update(deltaTime: number){}
 
+    //生成拼圖實體
     initPuzzle()
     {
         if(!this.cellPrefab){
             return;
         }
-        let board:number[][] = GameModel.getBoard();
-        let puzzles:number[][][] = GameModel.getPuzzles().map(v0 => v0.map(v1 => v1.slice()));
-        this.node.removeAllChildren();
-        let colors:Color[] = this.generateHueColors(puzzles.length);
+        let board:number[][] = GameModel.getBoard(); //從GameModel取得棋盤資訊
+        let puzzles:number[][][] = GameModel.getPuzzles().map(v0 => v0.map(v1 => v1.slice())); //從GameModel取得拼圖資訊
+        let colors:Color[] = this.generateHueColors(puzzles.length); //以等差色相生成拼圖數量的不同顏色
+        this.node.removeAllChildren(); //清除拼圖節點下所有拼圖
         for(let i = 0; i < puzzles.length; i++){
-            let puzzle:Node = new Node("" + i);
-            let [bx, by] = puzzles[i][0];
+            let puzzle:Node = new Node("" + i); //生成拼圖節點, 名稱i
+            let [bx, by] = puzzles[i][0]; //拼圖第一個CELL的座標bx,by
             for(let j = 0; j < puzzles[i].length; j++){
-                let cell:Node|null = instantiate(this.cellPrefab);
+                let cell:Node|null = instantiate(this.cellPrefab); //生成CELL
                 if(cell){
                     puzzle.addChild(cell);
-                    let [x, y] = puzzles[i][j];
-                    cell.setPosition((x - bx) * CELL_WIDTH, (y - by) * CELL_WIDTH, 0);
+                    let [x, y] = puzzles[i][j]; //該CELL的座標x,y
+                    cell.setPosition((x - bx) * CELL_WIDTH, (y - by) * CELL_WIDTH, 0); //各CELL位置都減少第一座標bx,by距離, 讓拼圖整體移動到0,0附近
                     let cell_sprite = cell.getComponent(Sprite);
                     if(cell_sprite){
-                        cell_sprite.color = colors[i];
+                        cell_sprite.color = colors[i]; //修改顏色
                     }
-                    cell.on(Input.EventType.MOUSE_DOWN, (event: EventMouse) => {this.onMouseDown(event, puzzle);}, this);
-                    cell.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this);
-                    cell.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+                    cell.on(Input.EventType.MOUSE_DOWN, (event: EventMouse) => {this.onMouseDown(event, puzzle);}, this); //拼圖抓取&旋轉事件, 傳入點擊的拼圖節點
+                    cell.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this); //拼圖移動事件(同input, 游標在CELL上時處理)
+                    cell.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);     //拼圖放下事件(同input, 游標在CELL上時處理)
                 }
             }
+            //隨機旋轉並移動到棋盤左方
             puzzle.eulerAngles = new Vec3(puzzle.eulerAngles.x, puzzle.eulerAngles.y, puzzle.eulerAngles.z + 90 * Math.floor(Math.random() * 4));
             puzzle.setPosition((board.length * CELL_WIDTH * (-1)), 0, 0);
             this.node.addChild(puzzle);
         }
     }
 
+    //拼圖抓取&旋轉事件
     onMouseDown(_event: EventMouse, _puzzle:Node)
     {
         if(!_puzzle.parent){
             return;
         }
-        _puzzle.setSiblingIndex(_puzzle.parent.children.length - 1);
-        this.getFitCell(_puzzle);
+        _puzzle.setSiblingIndex(_puzzle.parent.children.length - 1); //設定點擊拼圖置頂
+        this.getFitCell(_puzzle); //取得拼圖重疊棋盤格資訊
+        //重疊棋盤格與拼圖大小一致, 處理拼圖移出棋盤
         if(this.fitCells.length == _puzzle.children.length){
             this.node.emit('onRemovePuzzle', this.fitCells, _puzzle.name);
         }
+        //右鍵旋轉
         if(_event.getButton() == EMouseType.MT_RIGHT){
-            //將屏幕座標轉換為父節點空間坐標
-            let cur_pos = new Vec3(_event.getUILocation().x, _event.getUILocation().y, 0); //屏幕座標
+            //游標在畫面上的座標轉換在PuzzleController中的座標
+            let cur_pos = new Vec3(_event.getUILocation().x, _event.getUILocation().y, 0);
             let pos_in_parent = _puzzle.parent.getComponent(UITransform).convertToNodeSpaceAR(cur_pos);
-            //計算點對puzzle的偏移量
+            //座標與puzzle位置設定差
             let puzzle_pos = _puzzle.getPosition();
             let offset = new Vec3(pos_in_parent.x - puzzle_pos.x, pos_in_parent.y - puzzle_pos.y, 0);
-            //旋轉弧度
-            let [cos, sin] = [Math.cos(Math.PI / (-2)), Math.sin(Math.PI / (-2))];
+            let [cos, sin] = [Math.cos(Math.PI / (-2)), Math.sin(Math.PI / (-2))]; //旋轉弧度(-90度)
+            //設定新位置以游標在PuzzleController中的座標為旋轉中心, 扣除旋轉後與puzzle位置設定差
             let [rx, ry] = [offset.x * cos - offset.y * sin, offset.x * sin + offset.y * cos];
-            // 新位置 = 旋轉中心 - 旋轉後的偏移量
             let [nx, ny] = [pos_in_parent.x - rx, pos_in_parent.y - ry];
             _puzzle.setPosition(nx, ny, 0);
             _puzzle.eulerAngles = new Vec3(_puzzle.eulerAngles.x, _puzzle.eulerAngles.y, (_puzzle.eulerAngles.z - 90) % 360);
         }
+        //左鍵抓取拼圖紀錄puzzle開始位置設定, 游標位置, 拼圖節點
         else if(_event.getButton() == EMouseType.MT_LEFT && !this.dragPuzzle){
             this.puzzleStartPos.set(_puzzle.getPosition());
             this.dragStartPos.set(_event.getUILocation().x, _event.getUILocation().y, 0);
@@ -94,7 +99,9 @@ export class PuzzleController extends Component {
 
     onMouseMove(_event: EventMouse)
     {
+        //若游標移動中有紀錄的拼圖節點
         if(this.dragPuzzle){
+            //計算游標移動量, 設定puzzle開始位置差
             let cur_pos = _event.getUILocation();
             let [dx, dy] = [this.dragStartPos.x - cur_pos.x, this.dragStartPos.y - cur_pos.y];
             this.dragPuzzle.setPosition(this.puzzleStartPos.x - dx, this.puzzleStartPos.y - dy);
@@ -103,13 +110,13 @@ export class PuzzleController extends Component {
 
     onMouseUp(_event: EventMouse)
     {
+        //若游標放開時有紀錄的拼圖節點
         if(this.dragPuzzle){
-            if(this.dragPuzzle.parent){
-                this.getFitCell(this.dragPuzzle);
-                if(this.fitCells.length == this.dragPuzzle.children.length){
-                    this.node.emit('onFitPuzzle', this.fitCells, this.dragPuzzle.name);
-                    return;
-                }
+            this.getFitCell(this.dragPuzzle); //取得拼圖重疊棋盤格資訊
+            //重疊棋盤格與拼圖大小一致, 處理拼圖放入棋盤
+            if(this.fitCells.length == this.dragPuzzle.children.length){
+                this.node.emit('onFitPuzzle', this.fitCells, this.dragPuzzle.name);
+                return;
             }
             this.dragPuzzle = null;
         }
@@ -119,23 +126,31 @@ export class PuzzleController extends Component {
     {
         let [dx, dy] = [0, 0];
         this.fitCells = [];
-        let board:number[][] = GameModel.getBoard();
+        if(!_puzzle.parent){
+            return;
+        }
+        let board:number[][] = GameModel.getBoard(); //從GameModel取得棋盤資訊
         for(let i = 0; i < _puzzle.children.length; i++){
+            //各CELL在畫面上的座標轉換在PuzzleController中的座標x,y
             let cur_pos = _puzzle.children[i].getWorldPosition();
             let pos_in_parent = _puzzle.parent.getComponent(UITransform).convertToNodeSpaceAR(cur_pos);
             let [x, y] = [pos_in_parent.x, pos_in_parent.y];
+            //畫面棋盤座標為中央0, 上下左右各一半棋盤長度, 判斷x,y是否在棋盤範圍+吸附範圍(FIT_ALLOW)內
             if(Math.abs(x) > CELL_WIDTH * (board.length - 1) / 2 + FIT_ALLOW || Math.abs(y) > CELL_WIDTH * (board.length - 1) / 2 + FIT_ALLOW){
                 break;
             }
+            //計算CELL座標是否在棋盤格吸附範圍內, 偶數長度的棋盤中央非棋盤格調整x,y
             if(board.length % 2 == 0){
                 [x, y] = [x + CELL_WIDTH * 0.5, y + CELL_WIDTH * 0.5];
             }
+            //CELL座標除以棋盤格, 判斷餘數是否在一單位格的+-吸附範圍內
             if(Math.abs(x % CELL_WIDTH) > FIT_ALLOW && Math.abs(x % CELL_WIDTH) < CELL_WIDTH - FIT_ALLOW){
                 break;
             }
             if(Math.abs(y % CELL_WIDTH) > FIT_ALLOW && Math.abs(y % CELL_WIDTH) < CELL_WIDTH - FIT_ALLOW){
                 break;
             }
+            //確認CELL在棋盤範圍內且在棋盤格吸附範圍, 計算實際偏差量
             if(dx == 0 && dy == 0){
                 dx = (x % CELL_WIDTH + CELL_WIDTH) % CELL_WIDTH;
                 if(dx > FIT_ALLOW){
@@ -145,22 +160,29 @@ export class PuzzleController extends Component {
                 if(dy > FIT_ALLOW){
                     dy -= CELL_WIDTH;
                 }
+                //紀錄puzzle位置設定與扣除偏差量後的位置(吸附後的位置)
                 let puzzle_pos = _puzzle.getPosition();
                 this.fitPuzzlePos = [puzzle_pos.x - dx, puzzle_pos.y - dy];
             }
-            this.fitCells.push([Math.round((x - dx) / CELL_WIDTH + Math.floor((board.length - 1) / 2)), Math.round((y - dy) / CELL_WIDTH + Math.floor((board.length - 1) / 2))]);
+            //再將x,y扣除吸附偏差調整為吻合棋盤格的座標, 方便計算所屬棋盤格id
+            [x, y] = [x - dx, y - dy];
+            //座標轉換為棋盤格id, 因當作陣列id用四捨五入防止TypeScript的浮點數誤差
+            this.fitCells.push([Math.round(x / CELL_WIDTH + Math.floor((board.length - 1) / 2)), Math.round(y / CELL_WIDTH + Math.floor((board.length - 1) / 2))]);
         }
     }
 
+    //拼圖放上棋盤事件處理完成的回傳
     onFitPuzzleCallback(_success:boolean)
     {
         if(this.dragPuzzle && _success){
+            //判定成功調整為吸附後位置
             this.dragPuzzle.setPosition(this.fitPuzzlePos[0], this.fitPuzzlePos[1], 0);
             this.fitPuzzlePos = [0, 0];
         }
         this.dragPuzzle = null;
     }
 
+    //HSL轉RGB公式
     hslToRgb(_h:number, _s:number, _l:number): [number, number, number]
     {
         let r:number, g:number, b:number;
@@ -185,6 +207,7 @@ export class PuzzleController extends Component {
         return [r * 255, g * 255, b * 255];
     }
 
+    //生成_n個色相等差的顏色
     generateHueColors(_n:number): Color[]
     {
         let colors:Color[] = [];
@@ -196,11 +219,11 @@ export class PuzzleController extends Component {
         return colors;
     }
 
-    private fitCells:number[][] = [];
-    private fitPuzzlePos:number[] = [0, 0];
-    private dragPuzzle:Node|null = null;
-    private dragStartPos:Vec3 = new Vec3();
-    private puzzleStartPos:Vec3 = new Vec3();
+    private fitCells:number[][] = []; //拼圖重疊棋盤格id
+    private fitPuzzlePos:number[] = [0, 0]; //拼圖重疊棋盤格棋盤座標(拼圖吸附後位置)
+    private dragPuzzle:Node|null = null; //抓取中的拼圖
+    private dragStartPos:Vec3 = new Vec3(); //抓取拼圖前游標位置(計算移動量)
+    private puzzleStartPos:Vec3 = new Vec3(); //抓取拼圖前拼圖位置(計算移動量)
 }
 
 

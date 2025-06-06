@@ -19,11 +19,12 @@ export class GameController extends Component {
 
     start()
     {
-        this.restart();
-        this.puzzleCtrl?.node.on('onFitPuzzle', this.onFitPuzzle, this);
-        this.puzzleCtrl?.node.on('onRemovePuzzle', this.onRemovePuzzle, this);
+        this.restart(); //初始化單局資訊
+        this.puzzleCtrl?.node.on('onFitPuzzle', this.onFitPuzzle, this); //接收拼圖放上棋盤事件
+        this.puzzleCtrl?.node.on('onRemovePuzzle', this.onRemovePuzzle, this); //接收拼圖移出棋盤事件
     }
 
+    //初始化單局資訊
     restart()
     {
         this.initBoard();
@@ -32,17 +33,19 @@ export class GameController extends Component {
 
     update(deltaTime: number){}
 
+    //初始化棋盤資訊
     initBoard()
     {
-        let board_length = GameModel.getBoardLength();
         if(!this.cellPrefab){
             return;
         }
-        let board:number[][] = [];
-        this.node.removeAllChildren();
+        let board_length = GameModel.getBoardLength(); //棋盤大小
+        let board:number[][] = []; //空棋盤資訊
+        this.node.removeAllChildren(); //清除棋盤節點
         for(let i = 0; i < board_length; i++){
             let line = [];
             for(let j = 0; j < board_length; j++){
+                //生成ixj個cell加入棋盤節點
                 let cell:Node|null = instantiate(this.cellPrefab);
                 if(cell){
                     this.node.addChild(cell);
@@ -51,120 +54,153 @@ export class GameController extends Component {
                     if(cell_sprite){
                         cell_sprite.color = BOARD_COLOR;
                     }
-                    line.push(-1);
+                    line.push(-1); //初始棋盤資訊每格填入-1
                 }
             }
             board.push(line);
         }
-        GameModel.setBoard(board);
+        GameModel.setBoard(board); //更新棋盤資訊給GameModel
+        //棋盤節點置中於畫面
         let pos = board_length * CELL_WIDTH * (-0.5) + CELL_WIDTH * (0.5);
         this.node.setPosition(pos, pos, 0);
-        this.generatePuzzle(board);
+        this.generatePuzzle(board); //生成拼圖
     }
 
+    //生成拼圖
     generatePuzzle(_board:number[][])
     {
-        let puzzles:number[][][] = [];
+        let puzzles:number[][][] = []; //空拼圖資訊
         for(let i = 0; i < _board.length; i++){
             for(let j = 0; j < _board[i].length; j++){
+                //遍歷棋盤資訊尋找初始格-1
                 if(_board[i][j] == -1){
+                    let puzzle_id = puzzles.length;
+                    //將i,j格設定為拼圖第一個CELL
                     puzzles.push([[i, j]]);
-                    _board[i][j] = puzzles.length - 1;
-                    this.addNearCell(puzzles, _board);
-                    if(puzzles[puzzles.length - 1].length <= 1){
-                        let [x, y] = puzzles[puzzles.length - 1][0];
-                        let puzzle_id = this.findNearPuzzle(_board, x, y);
-                        puzzles[puzzle_id].push(puzzles[puzzles.length - 1][0]);
+                    _board[i][j] = puzzle_id;
+                    this.addNearCell(puzzles, _board); //遞迴生成鄰近CELL
+                    //生成結果若只有1CELL, 加進鄰近拼圖
+                    if(puzzles[puzzle_id].length <= 1){
+                        let [x, y] = puzzles[puzzle_id][0];
+                        let near_puzzle_id = this.findNearPuzzle(_board, x, y);
+                        puzzles[near_puzzle_id].push(puzzles[puzzle_id][0]);
                         puzzles.pop();
-                        _board[x][y] = puzzle_id;
+                        _board[x][y] = near_puzzle_id;
                     }
                 }
             }
         }
-        GameModel.setPuzzles(puzzles);
+        GameModel.setPuzzles(puzzles); //更新拼圖資訊給GameModel
     }
 
+    //遞迴生成鄰近CELL
     addNearCell(_puzzles:number[][][], _board:number[][])
     {
         let puzzle_id = _puzzles.length - 1;
         let puzzle = _puzzles[puzzle_id];
-        let board:number[][] = _board.map(v => v.slice());
-        let new_cell:number[][] = [];
-        let direct = [[1, 0], [0, 1]];
+        let board:number[][] = _board.map(v => v.slice()); //複製棋盤資訊暫時修改
+        let new_cell:number[][] = []; //候選生成CELL
+        let direct = [[1, 0], [0, 1]]; //往右下尋找可生成CELL(避免太容易壓縮其他拼圖生成空間不往左上生成)
+        //遍歷現有CELL
         for(let i = 0; i < puzzle.length; i++){
-            let [cx, cy] = puzzle[i];
+            let [cx, cy] = puzzle[i]; //CELL的x,y
+            //搜尋右與下棋盤
             for(let j = 0; j < direct.length; j++){
                 let [dx, dy] = direct[j];
-                let [x, y] = [cx + dx, cy + dy];
+                let [x, y] = [cx + dx, cy + dy]; //右與下CELL的x,y
+                //若在棋盤範圍內且未被占用(-1)則加入候選
                 if(x < board.length && y < board[x].length && board[x][y] == -1){
                     new_cell.push([x, y]);
-                    board[x][y] = 0;
+                    board[x][y] = 0; //選入CELL後棋盤上設定為佔用
                 }
             }
         }
+        //若有候選且CELL數在機率表長度內
         if(new_cell.length > 0 && puzzle.length < ADD_NEAR_RATE.length){
+            //機率表抽選是否生成
             if(Math.random() < ADD_NEAR_RATE[puzzle.length]){
+                //生成成功由候選隨機1個CELL加入
                 let rand:number = Math.floor(Math.random() * new_cell.length);
                 let [x, y] = new_cell[rand];
                 _puzzles[puzzle_id].push(new_cell[rand]);
-                _board[x][y] = puzzle_id;
-                this.addNearCell(_puzzles, _board);
+                _board[x][y] = puzzle_id; //設定棋盤上佔用
+                this.addNearCell(_puzzles, _board); //繼續生成鄰近CELL
             }
         }
     }
 
-    findNearPuzzle(_board:number[][], _x:number, _y:number)
+    //尋找鄰近拼圖
+    findNearPuzzle(_board:number[][], _x:number, _y:number):number
     {
-        let direct = [[-1, 0], [1, 0], [0, 1], [0, -1]];
+        let direct = [[-1, 0], [1, 0], [0, 1], [0, -1]]; //4方向
         let near:number[][] = [];
+        //尋找棋盤範圍內且已被佔用的鄰近CELL
         for(let i = 0; i < direct.length; i++){
             let [dx, dy] = direct[i];
             let [x, y] = [_x + dx, _y + dy];
-            if(x >= 0 && y >= 0 && x < _board.length && y < _board[x].length){
+            if(x >= 0 && y >= 0 && x < _board.length && y < _board[x].length && _board[x][y] > -1){
                 near.push([x, y]);
             }
         }
-        let [nx, ny] = near[Math.floor(Math.random() * near.length)];
-        return _board[nx][ny];
+        //抽選其中一個鄰近CELL的佔用拼圖ID回傳
+        if(near.length > 0){
+            let [nx, ny] = near[Math.floor(Math.random() * near.length)];
+            return _board[nx][ny];
+        }
+        return 0;
     }
 
+    //拼圖放上棋盤事件
     onFitPuzzle(_fit_cell:number[][], _name:string)
     {
-        let puzzle_id = parseInt(_name);
-        let board:number[][] = GameModel.getBoard().map(v => v.slice());
+        let puzzle_id = parseInt(_name); //傳入拼圖id字串改為數字
+        let board:number[][] = GameModel.getBoard().map(v => v.slice()); //複製棋盤資訊暫時修改(結果判定為失敗就不更新)
+        //判定每個CELL的棋盤資訊都是-1, 填入拼圖id
         for(let i = 0; i < _fit_cell.length; i++){
             let [x, y] = _fit_cell[i];
             if(board[x][y] == -1){
                 board[x][y] = puzzle_id;
             }
+            //遇到佔用格回傳結果, 不更新棋盤資訊
             else{
                 this.puzzleCtrl?.onFitPuzzleCallback(false);
                 return;
             }
         }
+        //放上拼圖成功回傳結果, 更新棋盤資訊
         GameModel.setBoard(board);
         this.puzzleCtrl?.onFitPuzzleCallback(true);
-        this.checkResult(board);
+        this.checkResult(board); //勝利判定
     }
 
+    //拼圖移出棋盤事件
     onRemovePuzzle(_fit_cell:number[][], _name:string)
     {
-        let puzzle_id = parseInt(_name);
-        let board:number[][] = GameModel.getBoard().map(v => v.slice());
+        let puzzle_id = parseInt(_name); //傳入拼圖id字串改為數字
+        let board:number[][] = GameModel.getBoard().map(v => v.slice()); //複製棋盤資訊暫時修改(結果判定為失敗就不更新)
+        //判定每個CELL的棋盤資訊都是拼圖id, 填入-1
         for(let i = 0; i < _fit_cell.length; i++){
             let [x, y] = _fit_cell[i];
             if(board[x][y] == puzzle_id){
                 board[x][y] = -1;
             }
+            //遇到非拼圖格, 不更新棋盤資訊
             else{
                 return;
             }
         }
-        GameModel.setBoard(board);
+        GameModel.setBoard(board); //移出拼圖成功, 更新棋盤資訊
     }
 
+    onStartButtonClicked()
+    {
+        this.setMenuVisible(false); //遊戲進行, 隱藏選單
+    }
+
+    //勝利判定
     checkResult(_board:number[][])
     {
+        //棋盤資訊填滿為勝利
         for(let i = 0; i < _board.length; i++){
             for(let j = 0; j < _board[i].length; j++){
                 if(_board[i][j] == -1){
@@ -172,6 +208,7 @@ export class GameController extends Component {
                 }
             }
         }
+        //叫出選單, 顯示勝利資訊
         this.setMenuVisible(true);
         if(this.btnLabel){
             this.btnLabel.string = 'Next';
@@ -179,13 +216,9 @@ export class GameController extends Component {
         if(this.titleLabel){
             this.titleLabel.string = 'Congraduration!';
         }
+        //更新棋盤大小並初始化單局資訊
         GameModel.setBoardLength(GameModel.getBoardLength() + 1);
         this.restart();
-    }
-
-    onStartButtonClicked()
-    {
-        this.setMenuVisible(false); //遊戲進行狀態
     }
 
     setMenuVisible(_show: boolean)
