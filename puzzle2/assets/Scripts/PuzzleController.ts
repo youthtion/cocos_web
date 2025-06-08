@@ -124,12 +124,7 @@ export class PuzzleController extends Component {
             this.getFitCell(this.dragPuzzle); //取得拼圖重疊棋盤格資訊
             //重疊棋盤格與拼圖大小一致, 處理拼圖放入棋盤
             if(this.fitCells.length == this.dragPuzzle.children.length){
-                if(GameModel.getGravityBuff()){
-                    this.node.emit('onFallPuzzle', this.fitCells, this.dragPuzzle.name);    
-                }
-                else{
-                    this.node.emit('onFitPuzzle', this.fitCells, this.dragPuzzle.name);
-                }
+                this.node.emit('onFitPuzzle', this.fitCells, this.dragPuzzle.name);    
                 return;
             }
             this.dragPuzzle = null;
@@ -186,20 +181,11 @@ export class PuzzleController extends Component {
     }
 
     //拼圖放上棋盤事件處理完成的回傳
-    onFitPuzzleCallback(_success:boolean)
+    onFitPuzzleCallback(_dy:number|null)
     {
-        if(this.dragPuzzle && _success){
+        if(this.dragPuzzle && _dy != null){
             //判定成功調整為吸附後位置
-            this.dragPuzzle.setPosition(this.fitPuzzlePos[0], this.fitPuzzlePos[1], 0);
-            this.fitPuzzlePos = [0, 0];
-        }
-        this.dragPuzzle = null;
-    }
-
-    onFallPuzzleCallback(_fall_y:number)
-    {
-        if(this.dragPuzzle){
-            this.dragPuzzle.setPosition(this.fitPuzzlePos[0], this.fitPuzzlePos[1] - Math.round(_fall_y * CELL_WIDTH), 0);
+            this.dragPuzzle.setPosition(this.fitPuzzlePos[0], this.fitPuzzlePos[1] - Math.round(_dy * CELL_WIDTH), 0);
             this.fitPuzzlePos = [0, 0];
         }
         this.dragPuzzle = null;

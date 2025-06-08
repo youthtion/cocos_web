@@ -18,15 +18,10 @@ export class CGameModel{
     private cannotRotateBuff:boolean = false;
     private obstacleBuff:number = 0;
     private onecellBuff:number = 0;
-    private gravityBuff:boolean = false;
+    private gravityBuff:number = 0;
+    private helpMode:boolean = false;
 
-    public setBoardLength(_set:number)
-    {
-        if(_set > MAX_BOARD_LENGTH){
-            _set = MAX_BOARD_LENGTH;
-        }
-        this.boardLength = _set;
-    }
+    public setBoardLength(_set:number) { this.boardLength = _set; }
     public setStage(_set:number) { this.stage = _set; }
     public setBoard(_set:number[][]) { this.board = _set.map(v => v.slice()); }
     public setPuzzles(_set:number[][][]) { this.puzzles = _set.map(v0 => v0.map(v1 => v1.slice())); }
@@ -35,7 +30,8 @@ export class CGameModel{
     public setCannotRotateBuff(_set:boolean) { this.cannotRotateBuff = _set; }
     public setObstacleBuff(_set:number) { this.obstacleBuff = _set; }
     public setOnecellBuff(_set:number) { this.onecellBuff = _set; }
-    public setGravityBuff(_set:boolean) { this.gravityBuff = _set; }
+    public setGravityBuff(_set:number) { this.gravityBuff = _set; }
+    public setHelpMode(_set:boolean) { this.helpMode = _set; }
 
     public getBoardLength():number { return this.boardLength; }
     public getStage():number { return this.stage; }
@@ -46,7 +42,8 @@ export class CGameModel{
     public getCannotRotateBuff():boolean { return this.cannotRotateBuff; }
     public getObstacleBuff():number { return this.obstacleBuff; }
     public getOnecellBuff():number { return this.onecellBuff; }
-    public getGravityBuff():boolean { return this.gravityBuff; }
+    public getGravityBuff():number { return this.gravityBuff; }
+    public getHelpMode():boolean { return this.helpMode; }
 }
 
 export const GameModel = new CGameModel();
