@@ -284,7 +284,7 @@ export class BuffController extends Component {
     private buffSprites:Sprite[] = [];
     private buffList:EBuffType[] = [];
     private buffNum:number = 2;
-    private refreshNum:number = 90;
+    private refreshNum:number = 0;
     private buffText:string[] = [
         '底板不擴大(1場)',
         '底板縮小',
