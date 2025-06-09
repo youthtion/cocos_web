@@ -1,5 +1,5 @@
-import { _decorator, Component, Node, Prefab, instantiate, Sprite, Label, EditBox, game } from 'cc';
-import { MAX_BOARD_LENGTH, MIN_BOARD_LENGTH, CELL_WIDTH, BOARD_COLOR, OBSTACLE_COLOR, ADD_NEAR_RATE, GameModel } from './GameModel'
+import { _decorator, Component, Node, Prefab, instantiate, Sprite, Label, EditBox, game, Game } from 'cc';
+import { MAX_BOARD_LENGTH, MIN_BOARD_LENGTH, CELL_WIDTH, BOARD_COLOR, OBSTACLE_COLOR, ADD_NEAR_RATE, EBuffType, GameModel } from './GameModel'
 import { PuzzleController } from './PuzzleController'
 import { BuffController } from './BuffController'
 const { ccclass, property } = _decorator;
@@ -65,8 +65,8 @@ export class GameController extends Component {
             this.stageLabel.string = '';
         }
         GameModel.setStage(GameModel.getStage() + 1);
-        GameModel.setCannotRotateBuff(false);
-        GameModel.setGravityBuff(0);
+        GameModel.removeBuff(EBuffType.BD_ROTATE);
+        GameModel.removeBuff(EBuffType.BD_GRAVITY);
         this.buffCtrl?.generateBuffList();
         this.buffCtrl?.showBuffBtn();
         this.puzzleCtrl?.setEventsActive(false);
@@ -96,8 +96,8 @@ export class GameController extends Component {
         let board_length = GameModel.getBoardLength(); //棋盤大小
         let board:number[][] = []; //空棋盤資訊
         this.node.removeAllChildren(); //清除棋盤節點
-        if(_obstacle_set.size == 0 && GameModel.getObstacleBuff() > 0){
-            let obstacle_buff = GameModel.getObstacleBuff();
+        if(_obstacle_set.size == 0 && GameModel.getBuff(EBuffType.BD_OBSTACLE) > 0){
+            let obstacle_buff = GameModel.getBuff(EBuffType.BD_OBSTACLE);
             let part_len = Math.floor(board_length * board_length / obstacle_buff);
             for(let i = 0; i < obstacle_buff; i++){
                 _obstacle_set.add(Math.floor(Math.random() * part_len) + part_len * i);
@@ -139,7 +139,7 @@ export class GameController extends Component {
     {
         let board:number[][] = GameModel.getBoard().map(v => v.slice());
         let puzzles:number[][][] = []; //空拼圖資訊
-        let onecell_buff = GameModel.getOnecellBuff();
+        let onecell_buff = GameModel.getBuff(EBuffType.BD_ONECELL);
         for(let i = 0; i < board.length; i++){
             for(let j = 0; j < board[i].length; j++){
                 //遍歷棋盤資訊尋找初始格-1
@@ -230,7 +230,7 @@ export class GameController extends Component {
     //拼圖放上棋盤事件
     onFitPuzzle(_fit_cell:number[][], _name:string)
     {
-        let gravity = GameModel.getGravityBuff();
+        let gravity = GameModel.getBuff(EBuffType.BD_GRAVITY);
         //找方塊最高和最低y座標
         let [min_y, max_y] = [Infinity, -1];
         for(let i = 0; i < _fit_cell.length; i++){
@@ -367,8 +367,8 @@ export class GameController extends Component {
                     }
                 }
                 GameModel.setBoardLength(board_len);
-                GameModel.setCannotRotateBuff(rotate == 0 ? true : false);
-                GameModel.setGravityBuff(gravity);
+                GameModel.setBuff(EBuffType.BD_ROTATE, rotate);
+                GameModel.setBuff(EBuffType.BD_GRAVITY, gravity);
                 this.setMenuVisible(false);
                 if(this.stageLabel){
                     this.stageLabel.string = '';
@@ -412,8 +412,8 @@ export class GameController extends Component {
                     let query_str = 'https://youthtion.github.io/cocos_web/puzzle?';
                     let board = GameModel.getBoard().map(v => v.slice());
                     query_str += 'b=' + String(board.length);
-                    query_str += '&r=' + String(GameModel.getCannotRotateBuff() == true ? 0 : 1);
-                    query_str += '&g=' + String(GameModel.getGravityBuff());
+                    query_str += '&r=' + String(GameModel.getBuff(EBuffType.BD_ROTATE));
+                    query_str += '&g=' + String(GameModel.getBuff(EBuffType.BD_GRAVITY));
                     let o = '';
                     for(let i = 0; i < board.length; i++){
                         for(let j = 0; j < board[i].length; j++){

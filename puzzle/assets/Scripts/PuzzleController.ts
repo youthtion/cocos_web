@@ -1,5 +1,5 @@
-import { _decorator, Component, Node, Prefab, instantiate, Sprite, Color, Input, EventMouse, input, Vec3, UITransform, CCFloat, Game } from 'cc';
-import { CELL_WIDTH, FIT_ALLOW, GameModel } from './GameModel'
+import { _decorator, Component, Node, Prefab, instantiate, Sprite, Color, Input, EventMouse, input, Vec3, UITransform, CCFloat } from 'cc';
+import { CELL_WIDTH, FIT_ALLOW, EBuffType, GameModel } from './GameModel'
 const { ccclass, property } = _decorator;
 
 //滑鼠點擊類型(對應event.getButton)
@@ -43,7 +43,7 @@ export class PuzzleController extends Component {
         }
         let board:number[][] = GameModel.getBoard(); //從GameModel取得棋盤資訊
         let puzzles:number[][][] = GameModel.getPuzzles().map(v0 => v0.map(v1 => v1.slice())); //從GameModel取得拼圖資訊
-        let colors:Color[] = this.generateHueColors(puzzles.length * GameModel.getLessHueBuff());
+        let colors:Color[] = this.generateHueColors(puzzles.length * (GameModel.getBuff(EBuffType.BD_HUE) + 1));
         this.node.removeAllChildren(); //清除拼圖節點下所有拼圖
         for(let i = 0; i < puzzles.length; i++){
             let puzzle:Node = new Node("" + i); //生成拼圖節點, 名稱i
@@ -63,7 +63,7 @@ export class PuzzleController extends Component {
                     cell.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);     //拼圖放下事件(同input, 游標在CELL上時處理)
                 }
             }
-            if(!GameModel.getCannotRotateBuff()){
+            if(GameModel.getBuff(EBuffType.BD_ROTATE) == 0){
                 puzzle.eulerAngles = new Vec3(puzzle.eulerAngles.x, puzzle.eulerAngles.y, puzzle.eulerAngles.z + 90 * Math.floor(Math.random() * 4));
             }
             puzzle.setPosition((board.length * CELL_WIDTH * (-1)), 0, 0);
@@ -84,7 +84,7 @@ export class PuzzleController extends Component {
             this.node.emit('onRemovePuzzle', this.fitCells, _puzzle.name);
         }
         //右鍵旋轉
-        if(!GameModel.getCannotRotateBuff() && _event.getButton() == EMouseType.MT_RIGHT){
+        if(GameModel.getBuff(EBuffType.BD_ROTATE) == 0 && _event.getButton() == EMouseType.MT_RIGHT){
             //游標在畫面上的座標轉換在PuzzleController中的座標
             let cur_pos = new Vec3(_event.getUILocation().x, _event.getUILocation().y, 0);
             let pos_in_parent = _puzzle.parent.getComponent(UITransform).convertToNodeSpaceAR(cur_pos);

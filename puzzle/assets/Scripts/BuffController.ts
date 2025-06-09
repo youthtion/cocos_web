@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Label, CCInteger, SpriteAtlas, Sprite } from 'cc';
-import { MIN_BOARD_LENGTH, MAX_BOARD_LENGTH, ADD_NEAR_RATE, GameModel } from './GameModel'
+import { MIN_BOARD_LENGTH, MAX_BOARD_LENGTH, ADD_NEAR_RATE, EBuffType, GameModel } from './GameModel'
 const { ccclass, property } = _decorator;
 
 const MAX_SIZE_BUFF = 3;
@@ -8,7 +8,7 @@ const MAX_OBSTACLE_BUFF = 4;
 const MAX_ONECELL_BUFF = 5;
 const MAX_BUFF_NUM = 3;
 
-enum EBuffType{
+enum EBuffTextType{
     BT_GROW_STOP,
     BT_GROW_DEC,
     BT_SMALLER_PUZZLE,
@@ -99,7 +99,7 @@ export class BuffController extends Component {
                 this.buffBtns[i].setPosition(this.buffSpace * (this.buffNum - 1) * (-0.5) + i * this.buffSpace, 0, 0);
                 this.buffLabels[i].string = this.buffText[this.buffList[i]];
                 let atlas_id = this.buffList[i] + 1;
-                if(this.buffList[i] == EBuffType.BT_LESS_BUFF){
+                if(this.buffList[i] == EBuffTextType.BT_LESS_BUFF){
                     if(this.buffNum - 1 == 1){
                         atlas_id = 12;
                     }
@@ -107,7 +107,7 @@ export class BuffController extends Component {
                         atlas_id = 18;
                     }
                 }
-                if(this.buffList[i] == EBuffType.BT_MORE_BUFF){
+                if(this.buffList[i] == EBuffTextType.BT_MORE_BUFF){
                     if(this.buffNum + 1 == 2){
                         atlas_id = 18;
                     }
@@ -145,7 +145,7 @@ export class BuffController extends Component {
     {
         let add_near_rate = ADD_NEAR_RATE.slice();
         for(let i = 3; i < add_near_rate.length; i++){
-            add_near_rate[i] += GameModel.getPuzzleSizeBuff() * 0.1;
+            add_near_rate[i] += GameModel.getBuff(EBuffType.BD_SIZE) * 0.1;
             if(add_near_rate[i] > 1.0){
                 add_near_rate[i] = 1.0;
             }
@@ -158,71 +158,71 @@ export class BuffController extends Component {
 
     setBuff(_id:number)
     {
-        let type:EBuffType = this.buffList[_id];
+        let type:EBuffTextType = this.buffList[_id];
         switch(type){
-            case EBuffType.BT_GROW_STOP:
+            case EBuffTextType.BT_GROW_STOP:
                 break;
-            case EBuffType.BT_GROW_DEC:
+            case EBuffTextType.BT_GROW_DEC:
                 if(GameModel.getBoardLength() > MIN_BOARD_LENGTH){
                     GameModel.setBoardLength(GameModel.getBoardLength() - 1);
                 }
                 break;
-            case EBuffType.BT_SMALLER_PUZZLE:
-                GameModel.setPuzzleSizeBuff(GameModel.getPuzzleSizeBuff() - 1);
+            case EBuffTextType.BT_SMALLER_PUZZLE:
+                GameModel.decreaseBuff(EBuffType.BD_SIZE);
                 break;
-            case EBuffType.BT_BIGGER_PUZZLE:
-                GameModel.setPuzzleSizeBuff(GameModel.getPuzzleSizeBuff() + 1);
+            case EBuffTextType.BT_BIGGER_PUZZLE:
+                GameModel.addBuff(EBuffType.BD_SIZE);
                 break;
-            case EBuffType.BT_LESS_HUE:
-                GameModel.setLessHueBuff(GameModel.getLessHueBuff() + 1);
+            case EBuffTextType.BT_LESS_HUE:
+                GameModel.addBuff(EBuffType.BD_HUE);
                 break;
-            case EBuffType.BT_MORE_HUE:
-                GameModel.setLessHueBuff(GameModel.getLessHueBuff() - 1);
+            case EBuffTextType.BT_MORE_HUE:
+                GameModel.decreaseBuff(EBuffType.BD_HUE);
                 break;
-            case EBuffType.BT_ADD_OBSTACLE:
-                GameModel.setObstacleBuff(GameModel.getObstacleBuff() + 1);
+            case EBuffTextType.BT_ADD_OBSTACLE:
+                GameModel.addBuff(EBuffType.BD_OBSTACLE);
                 break;
-            case EBuffType.BT_DEC_OBSTACLE:
-                GameModel.setObstacleBuff(GameModel.getObstacleBuff() - 1);
+            case EBuffTextType.BT_DEC_OBSTACLE:
+                GameModel.decreaseBuff(EBuffType.BD_OBSTACLE);
                 break;
-            case EBuffType.BT_GET_1X1_PUZZLE:
-                GameModel.setOnecellBuff(GameModel.getOnecellBuff() + 1);
+            case EBuffTextType.BT_GET_1X1_PUZZLE:
+                GameModel.addBuff(EBuffType.BD_ONECELL);
                 break;
-            case EBuffType.BT_LOSE_1X1_PUZZLE:
-                GameModel.setOnecellBuff(GameModel.getOnecellBuff() - 1);
-                this.buffList[_id] = EBuffType.BT_GROW_DEC;
+            case EBuffTextType.BT_LOSE_1X1_PUZZLE:
+                GameModel.decreaseBuff(EBuffType.BD_ONECELL);
+                this.buffList[_id] = EBuffTextType.BT_GROW_DEC;
                 this.showBuffBtn();
                 return;
-            case EBuffType.BT_CANNOT_ROTATE:
-                GameModel.setCannotRotateBuff(true);
-                this.buffList[_id] = EBuffType.BT_GROW_DEC;
+            case EBuffTextType.BT_CANNOT_ROTATE:
+                GameModel.setBuff(EBuffType.BD_ROTATE, 1);
+                this.buffList[_id] = EBuffTextType.BT_GROW_DEC;
                 this.showBuffBtn();
                 return;
-            case EBuffType.BT_LESS_BUFF:
+            case EBuffTextType.BT_LESS_BUFF:
                 this.buffNum -= 1;
                 this.refreshNum += 1;
                 this.buffList.splice(_id, 1);
                 this.showBuffBtn();
                 return;
-            case EBuffType.BT_MORE_BUFF:
+            case EBuffTextType.BT_MORE_BUFF:
                 this.buffNum += 1;
                 [this.buffList[_id], this.buffList[this.buffList.length - 1]] = [this.buffList[this.buffList.length - 1], this.buffList[_id]]
                 this.showBuffBtn();
                 return;
-            case EBuffType.BT_REFRESH:
+            case EBuffTextType.BT_REFRESH:
                 this.generateBuffList();
                 this.showBuffBtn();
                 return;
-            case EBuffType.BT_GRAVITY:
-                GameModel.setGravityBuff(1);
+            case EBuffTextType.BT_GRAVITY:
+                GameModel.setBuff(EBuffType.BD_GRAVITY, 1);
                 break;
-            case EBuffType.BT_BUOYANCY:
-                GameModel.setGravityBuff(-1);
+            case EBuffTextType.BT_BUOYANCY:
+                GameModel.setBuff(EBuffType.BD_GRAVITY, -1);
                 break;
-            case EBuffType.BT_PASS:
+            case EBuffTextType.BT_PASS:
                 break;
         }
-        if(type > EBuffType.BT_GROW_DEC && GameModel.getBoardLength() < MAX_BOARD_LENGTH){
+        if(type > EBuffTextType.BT_GROW_DEC && GameModel.getBoardLength() < MAX_BOARD_LENGTH){
             GameModel.setBoardLength(GameModel.getBoardLength() + 1);
         }
         this.node.emit('onSetBuffFinish');
@@ -232,47 +232,47 @@ export class BuffController extends Component {
     {
         this.buffList = [];
         if(GameModel.getBoardLength() < MAX_BOARD_LENGTH){
-            this.buffList.push(EBuffType.BT_GROW_STOP);
+            this.buffList.push(EBuffTextType.BT_GROW_STOP);
         }
-        if(GameModel.getPuzzleSizeBuff() > MIN_SIZE_BUFF){
-            this.buffList.push(EBuffType.BT_SMALLER_PUZZLE);
+        if(GameModel.getBuff(EBuffType.BD_SIZE) > MIN_SIZE_BUFF){
+            this.buffList.push(EBuffTextType.BT_SMALLER_PUZZLE);
         }
-        if(GameModel.getPuzzleSizeBuff() < MAX_SIZE_BUFF){
-            this.buffList.push(EBuffType.BT_BIGGER_PUZZLE);
+        if(GameModel.getBuff(EBuffType.BD_SIZE) < MAX_SIZE_BUFF){
+            this.buffList.push(EBuffTextType.BT_BIGGER_PUZZLE);
         }
-        this.buffList.push(EBuffType.BT_LESS_HUE);
-        if(GameModel.getLessHueBuff() > 1){
-            this.buffList.push(EBuffType.BT_MORE_HUE);
+        this.buffList.push(EBuffTextType.BT_LESS_HUE);
+        if(GameModel.getBuff(EBuffType.BD_HUE) > 0){
+            this.buffList.push(EBuffTextType.BT_MORE_HUE);
         }
-        if(GameModel.getObstacleBuff() < MAX_OBSTACLE_BUFF){
-            this.buffList.push(EBuffType.BT_ADD_OBSTACLE);
+        if(GameModel.getBuff(EBuffType.BD_OBSTACLE) < MAX_OBSTACLE_BUFF){
+            this.buffList.push(EBuffTextType.BT_ADD_OBSTACLE);
         }
-        if(GameModel.getObstacleBuff() > 0){
-            this.buffList.push(EBuffType.BT_DEC_OBSTACLE);
+        if(GameModel.getBuff(EBuffType.BD_OBSTACLE) > 0){
+            this.buffList.push(EBuffTextType.BT_DEC_OBSTACLE);
         }
-        if(GameModel.getOnecellBuff() < MAX_ONECELL_BUFF){
-            this.buffList.push(EBuffType.BT_GET_1X1_PUZZLE);
+        if(GameModel.getBuff(EBuffType.BD_ONECELL) < MAX_ONECELL_BUFF){
+            this.buffList.push(EBuffTextType.BT_GET_1X1_PUZZLE);
         }
         if(GameModel.getBoardLength() > MIN_BOARD_LENGTH){
-            if(GameModel.getOnecellBuff() > 0){
-                this.buffList.push(EBuffType.BT_LOSE_1X1_PUZZLE);
+            if(GameModel.getBuff(EBuffType.BD_ONECELL) > 0){
+                this.buffList.push(EBuffTextType.BT_LOSE_1X1_PUZZLE);
             }
-            if(!GameModel.getCannotRotateBuff()){
-                this.buffList.push(EBuffType.BT_CANNOT_ROTATE);
+            if(GameModel.getBuff(EBuffType.BD_ROTATE) == 0){
+                this.buffList.push(EBuffTextType.BT_CANNOT_ROTATE);
             }
         }
         if(this.buffNum > 1){
-            this.buffList.push(EBuffType.BT_LESS_BUFF);
+            this.buffList.push(EBuffTextType.BT_LESS_BUFF);
         }
         if(this.buffNum < MAX_BUFF_NUM){
-            this.buffList.push(EBuffType.BT_MORE_BUFF);
+            this.buffList.push(EBuffTextType.BT_MORE_BUFF);
         }
-        this.buffList.push(EBuffType.BT_REFRESH);
-        if(GameModel.getGravityBuff() == 0){
-            this.buffList.push(EBuffType.BT_GRAVITY);
-            this.buffList.push(EBuffType.BT_BUOYANCY);
+        this.buffList.push(EBuffTextType.BT_REFRESH);
+        if(GameModel.getBuff(EBuffType.BD_GRAVITY) == 0){
+            this.buffList.push(EBuffTextType.BT_GRAVITY);
+            this.buffList.push(EBuffTextType.BT_BUOYANCY);
         }
-        this.buffList.push(EBuffType.BT_PASS);
+        this.buffList.push(EBuffTextType.BT_PASS);
         for(let i = 0; i < this.buffList.length; i++){
             let rand = Math.floor(Math.random() * (this.buffList.length - i)) + i;
             [this.buffList[i], this.buffList[rand]] = [this.buffList[rand], this.buffList[i]];
@@ -282,7 +282,7 @@ export class BuffController extends Component {
     private buffBtns:Node[] = [];
     private buffLabels:Label[] = [];
     private buffSprites:Sprite[] = [];
-    private buffList:EBuffType[] = [];
+    private buffList:EBuffTextType[] = [];
     private buffNum:number = 2;
     private refreshNum:number = 0;
     private buffText:string[] = [
