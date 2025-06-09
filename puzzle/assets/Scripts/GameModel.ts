@@ -1,12 +1,14 @@
-import { Color } from 'cc';
-
 export const CELL_WIDTH = 60; //棋盤格長寬
 export const FIT_ALLOW = Math.floor(CELL_WIDTH / 4); //拼圖靠近吸附距離(1/4棋盤格)
-export const BOARD_COLOR = new Color(64, 64, 64); //棋盤顏色
-export const OBSTACLE_COLOR = new Color(0, 0, 0);
 export const ADD_NEAR_RATE = [1.0, 1.0, 1.0, 0.7, 0.5, 0.3]; //拼圖生成時長為N塊的機率
 export const MAX_BOARD_LENGTH = 10; //最大棋盤大小
 export const MIN_BOARD_LENGTH = 3;  //最小棋盤大小
+
+export enum EGameEvents{
+    GE_ADD_BUFF = 'onSetBuffFinish',
+    GE_PICK_PUZZLE = 'onPickPuzzle',
+    GE_PLACE_PUZZLE = 'onPlacePuzzle',
+}
 
 export enum EBuffType{
     BD_SIZE,

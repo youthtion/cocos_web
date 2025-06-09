@@ -1,8 +1,11 @@
-import { _decorator, Component, Node, Prefab, instantiate, Sprite, Label, EditBox, game, Game } from 'cc';
-import { MAX_BOARD_LENGTH, MIN_BOARD_LENGTH, CELL_WIDTH, BOARD_COLOR, OBSTACLE_COLOR, ADD_NEAR_RATE, EBuffType, GameModel } from './GameModel'
+import { _decorator, Component, Node, Prefab, instantiate, Sprite, Label, EditBox, Color } from 'cc';
+import { MAX_BOARD_LENGTH, MIN_BOARD_LENGTH, CELL_WIDTH, ADD_NEAR_RATE, EGameEvents, EBuffType, GameModel } from './GameModel'
 import { PuzzleController } from './PuzzleController'
 import { BuffController } from './BuffController'
 const { ccclass, property } = _decorator;
+
+const BOARD_COLOR = new Color(64, 64, 64); //棋盤顏色
+const OBSTACLE_COLOR = new Color(0, 0, 0);
 
 @ccclass('GameController')
 export class GameController extends Component {
@@ -33,7 +36,7 @@ export class GameController extends Component {
     start()
     {
         this.checkHelpMode();
-        this.buffCtrl?.node.on('onSetBuffFinish', this.onStartButtonClicked, this);
+        this.buffCtrl?.node.on(EGameEvents.GE_ADD_BUFF, this.onStartButtonClicked, this);
     }
 
     //初始化單局資訊
@@ -78,12 +81,12 @@ export class GameController extends Component {
     setEventsActive(_set:boolean)
     {
         if(_set){
-            this.puzzleCtrl?.node.on('onFitPuzzle', this.onFitPuzzle, this); //接收拼圖放上棋盤事件
-            this.puzzleCtrl?.node.on('onRemovePuzzle', this.onRemovePuzzle, this); //接收拼圖移出棋盤事件
+            this.puzzleCtrl?.node.on(EGameEvents.GE_PLACE_PUZZLE, this.onPlacePuzzle, this); //接收拼圖放上棋盤事件
+            this.puzzleCtrl?.node.on(EGameEvents.GE_PICK_PUZZLE, this.onPickPuzzle, this); //接收拼圖移出棋盤事件
         }
         else{
-            this.puzzleCtrl?.node.off('onFitPuzzle', this.onFitPuzzle, this);
-            this.puzzleCtrl?.node.off('onRemovePuzzle', this.onRemovePuzzle, this);
+            this.puzzleCtrl?.node.off(EGameEvents.GE_PLACE_PUZZLE, this.onPlacePuzzle, this);
+            this.puzzleCtrl?.node.off(EGameEvents.GE_PICK_PUZZLE, this.onPickPuzzle, this);
         }
     }
 
@@ -228,7 +231,7 @@ export class GameController extends Component {
     }
 
     //拼圖放上棋盤事件
-    onFitPuzzle(_fit_cell:number[][], _name:string)
+    onPlacePuzzle(_fit_cell:number[][], _name:string)
     {
         let gravity = GameModel.getBuff(EBuffType.BD_GRAVITY);
         //找方塊最高和最低y座標
@@ -270,7 +273,7 @@ export class GameController extends Component {
         }
         //沒有可以放上的棋盤格, 回傳結果不更新棋盤資訊
         if(dy == null){
-            this.puzzleCtrl?.onFitPuzzleCallback(dy);
+            this.puzzleCtrl?.onPlacePuzzleCallback(dy);
             return;
         }
         let puzzle_id = parseInt(_name);  //傳入拼圖id字串改為數字
@@ -280,12 +283,12 @@ export class GameController extends Component {
             board[x][y - dy] = puzzle_id;
         }
         GameModel.setBoard(board);
-        this.puzzleCtrl?.onFitPuzzleCallback(dy);
+        this.puzzleCtrl?.onPlacePuzzleCallback(dy);
         this.checkResult(board); //勝利判定
     }
 
     //拼圖移出棋盤事件
-    onRemovePuzzle(_fit_cell:number[][], _name:string)
+    onPickPuzzle(_fit_cell:number[][], _name:string)
     {
         let puzzle_id = parseInt(_name); //傳入拼圖id字串改為數字
         let board:number[][] = GameModel.getBoard().map(v => v.slice()); //複製棋盤資訊暫時修改(結果判定為失敗就不更新)
