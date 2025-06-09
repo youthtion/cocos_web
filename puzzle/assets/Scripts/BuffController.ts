@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Label, CCInteger, Game } from 'cc';
+import { _decorator, Component, Node, Label, CCInteger, SpriteAtlas, Sprite } from 'cc';
 import { MIN_BOARD_LENGTH, MAX_BOARD_LENGTH, ADD_NEAR_RATE, GameModel } from './GameModel'
 const { ccclass, property } = _decorator;
 
@@ -47,8 +47,16 @@ export class BuffController extends Component {
     public buffLabel2:Label|null = null;
     @property({type:Label})
     public buffLabel3:Label|null = null;
+    @property({type:Sprite})
+    public buffSprite1:Sprite|null = null;
+    @property({type:Sprite})
+    public buffSprite2:Sprite|null = null;
+    @property({type:Sprite})
+    public buffSprite3:Sprite|null = null;
     @property({type:CCInteger})
     public buffSpace:number = 0;
+    @property({type:SpriteAtlas})
+    public buffAtlas:SpriteAtlas|null = null!;
 
     start()
     {
@@ -70,6 +78,15 @@ export class BuffController extends Component {
         if(this.buffLabel3){
             this.buffLabels.push(this.buffLabel3);
         }
+        if(this.buffSprite1){
+            this.buffSprites.push(this.buffSprite1);
+        }
+        if(this.buffSprite2){
+            this.buffSprites.push(this.buffSprite2);
+        }
+        if(this.buffSprite3){
+            this.buffSprites.push(this.buffSprite3);
+        }
     }
 
     update(deltaTime: number) {}
@@ -81,6 +98,24 @@ export class BuffController extends Component {
                 this.buffBtns[i].active = true;
                 this.buffBtns[i].setPosition(this.buffSpace * (this.buffNum - 1) * (-0.5) + i * this.buffSpace, 0, 0);
                 this.buffLabels[i].string = this.buffText[this.buffList[i]];
+                let atlas_id = this.buffList[i] + 1;
+                if(this.buffList[i] == EBuffType.BT_LESS_BUFF){
+                    if(this.buffNum - 1 == 1){
+                        atlas_id = 12;
+                    }
+                    else if(this.buffNum - 1 == 2){
+                        atlas_id = 18;
+                    }
+                }
+                if(this.buffList[i] == EBuffType.BT_MORE_BUFF){
+                    if(this.buffNum + 1 == 2){
+                        atlas_id = 18;
+                    }
+                    else if(this.buffNum + 1 == 3){
+                        atlas_id = 13;
+                    }
+                }
+                this.buffSprites[i].spriteFrame = this.buffAtlas.getSpriteFrame("" + atlas_id);
             }
             else{
                 this.buffBtns[i].active = false;
@@ -246,9 +281,10 @@ export class BuffController extends Component {
 
     private buffBtns:Node[] = [];
     private buffLabels:Label[] = [];
+    private buffSprites:Sprite[] = [];
     private buffList:EBuffType[] = [];
     private buffNum:number = 2;
-    private refreshNum:number = 0;
+    private refreshNum:number = 90;
     private buffText:string[] = [
         '底板不擴大(1場)',
         '底板縮小',

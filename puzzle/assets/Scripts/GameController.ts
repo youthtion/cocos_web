@@ -409,7 +409,7 @@ export class GameController extends Component {
             if(this.shareMenu.active == false){
                 this.shareMenu.active = true;
                 if(this.shareEdit){
-                    let query_str = 'https://youthtion.github.io/cocos_web/puzzle2?';
+                    let query_str = 'https://youthtion.github.io/cocos_web/puzzle?';
                     let board = GameModel.getBoard().map(v => v.slice());
                     query_str += 'b=' + String(board.length);
                     query_str += '&r=' + String(GameModel.getCannotRotateBuff() == true ? 0 : 1);
