@@ -28,7 +28,10 @@ export class CGameModel{
     private buffData:number[] = new Array(EBuffType.BD_MAX).fill(0);
     private helpMode:boolean = false;
 
+    public addBoardLength() { this.boardLength++; }
+    public decreaseBoardLength() { this.boardLength--; }
     public setBoardLength(_set:number) { this.boardLength = _set; }
+    public addStage() { this.stage++; }
     public setStage(_set:number) { this.stage = _set; }
     public setBoard(_set:number[][]) { this.board = _set.map(v => v.slice()); }
     public setPuzzles(_set:number[][][]) { this.puzzles = _set.map(v0 => v0.map(v1 => v1.slice())); }

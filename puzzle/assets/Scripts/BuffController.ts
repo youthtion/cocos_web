@@ -20,7 +20,10 @@ enum EBuffUIType{
     BU_GET_1X1_PUZZLE,
     BU_LOSE_1X1_PUZZLE,
     BU_CANNOT_ROTATE,
-    BU_LESS_BUFF,
+    BU_LESS_BUFF, BU_BUFF_START = BU_LESS_BUFF,
+    BU_ONE_BUFF,
+    BU_TWO_BUFF,
+    BU_THREE_BUFF,
     BU_MORE_BUFF,
     BU_REFRESH,
     BU_GRAVITY,
@@ -28,11 +31,28 @@ enum EBuffUIType{
     BU_PASS,
 }
 
-enum EBuffAtlasType{
-    BA_ONEBUFF = 12,
-    BA_TWOBUFF = 18,
-    BA_THREEBUFF = 13,
-}
+const BUFF_TEXT: Record<EBuffUIType, string> = {
+    [EBuffUIType.BU_GROW_STOP]:'底板不擴大(1場)',
+    [EBuffUIType.BU_GROW_DEC]:'底板縮小',
+    [EBuffUIType.BU_SMALLER_PUZZLE]:'小方塊變多',
+    [EBuffUIType.BU_BIGGER_PUZZLE]:'大方塊變多',
+    [EBuffUIType.BU_LESS_HUE]:'方塊色差小',
+    [EBuffUIType.BU_MORE_HUE]:'方塊色差大',
+    [EBuffUIType.BU_ADD_OBSTACLE]:'底板缺格增加',
+    [EBuffUIType.BU_DEC_OBSTACLE]:'底板缺格減少',
+    [EBuffUIType.BU_GET_1X1_PUZZLE]:'獲得1x1方塊',
+    [EBuffUIType.BU_LOSE_1X1_PUZZLE]:'失去1x1方塊\n出現底板縮小',
+    [EBuffUIType.BU_CANNOT_ROTATE]:'不可旋轉(1場)\n出現底板縮小',
+    [EBuffUIType.BU_LESS_BUFF]:'選項減少\n獲得刷新次數',
+    [EBuffUIType.BU_ONE_BUFF]:'',
+    [EBuffUIType.BU_TWO_BUFF]:'',
+    [EBuffUIType.BU_THREE_BUFF]:'',
+    [EBuffUIType.BU_MORE_BUFF]:'選項增加',
+    [EBuffUIType.BU_REFRESH]:'刷新選項',
+    [EBuffUIType.BU_GRAVITY]:'產生重力(1場)',
+    [EBuffUIType.BU_BUOYANCY]:'產生浮力(1場)',
+    [EBuffUIType.BU_PASS]:'跳過',
+};
 
 @ccclass('BuffController')
 export class BuffController extends Component {
@@ -103,23 +123,13 @@ export class BuffController extends Component {
             if(this.buffNum > i){
                 this.buffBtns[i].active = true;
                 this.buffBtns[i].setPosition(this.buffSpace * (this.buffNum - 1) * (-0.5) + i * this.buffSpace, 0, 0);
-                this.buffLabels[i].string = this.buffText[this.buffList[i]];
-                let atlas_id = this.buffList[i] + 1;
+                this.buffLabels[i].string = BUFF_TEXT[this.buffList[i]];
+                let atlas_id = this.buffList[i];
                 if(this.buffList[i] == EBuffUIType.BU_LESS_BUFF){
-                    if(this.buffNum - 1 == 1){
-                        atlas_id = EBuffAtlasType.BA_ONEBUFF;
-                    }
-                    else if(this.buffNum - 1 == 2){
-                        atlas_id = EBuffAtlasType.BA_TWOBUFF;
-                    }
+                    atlas_id = EBuffUIType.BU_BUFF_START + (this.buffNum - 1);
                 }
-                if(this.buffList[i] == EBuffUIType.BU_MORE_BUFF){
-                    if(this.buffNum + 1 == 2){
-                        atlas_id = EBuffAtlasType.BA_TWOBUFF;
-                    }
-                    else if(this.buffNum + 1 == 3){
-                        atlas_id = EBuffAtlasType.BA_THREEBUFF;
-                    }
+                else if(this.buffList[i] == EBuffUIType.BU_MORE_BUFF){
+                    atlas_id = EBuffUIType.BU_BUFF_START + (this.buffNum + 1);
                 }
                 this.buffSprites[i].spriteFrame = this.buffAtlas.getSpriteFrame("" + atlas_id);
             }
@@ -168,7 +178,7 @@ export class BuffController extends Component {
         switch(type){
             case EBuffUIType.BU_GROW_DEC:
                 if(GameModel.getBoardLength() > MIN_BOARD_LENGTH){
-                    GameModel.setBoardLength(GameModel.getBoardLength() - 1);
+                    GameModel.decreaseBoardLength();
                 }
                 break;
             case EBuffUIType.BU_SMALLER_PUZZLE:
@@ -225,7 +235,7 @@ export class BuffController extends Component {
                 break;
         }
         if(type > EBuffUIType.BU_GROW_DEC && GameModel.getBoardLength() < MAX_BOARD_LENGTH){
-            GameModel.setBoardLength(GameModel.getBoardLength() + 1);
+            GameModel.addBoardLength();
         }
         this.node.emit(EGameEvents.GE_ADD_BUFF);
     }
@@ -287,24 +297,4 @@ export class BuffController extends Component {
     private buffList:EBuffUIType[] = [];
     private buffNum:number = 2;
     private refreshNum:number = 0;
-    private buffText:string[] = [
-        '底板不擴大(1場)',
-        '底板縮小',
-        '小方塊變多',
-        '大方塊變多',
-        '方塊色差小',
-        '方塊色差大',
-        '底板缺格增加',
-        '底板缺格減少',
-        '獲得1x1方塊',
-        '失去1x1方塊\n出現底板縮小',
-        '不可旋轉(1場)\n出現底板縮小',
-        '選項減少\n獲得刷新次數',
-        '選項增加',
-        '刷新選項',
-        '產生重力(1場)',
-        '產生浮力(1場)',
-        '跳過'];
 }
-
-

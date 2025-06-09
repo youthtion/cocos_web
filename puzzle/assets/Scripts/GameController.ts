@@ -67,7 +67,7 @@ export class GameController extends Component {
         if(this.stageLabel){
             this.stageLabel.string = '';
         }
-        GameModel.setStage(GameModel.getStage() + 1);
+        GameModel.addStage();
         GameModel.removeBuff(EBuffType.BD_ROTATE);
         GameModel.removeBuff(EBuffType.BD_GRAVITY);
         this.buffCtrl?.generateBuffList();

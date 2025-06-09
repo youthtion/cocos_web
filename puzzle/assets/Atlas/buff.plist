@@ -4,7 +4,7 @@
     <dict>
         <key>frames</key>
         <dict>
-            <key>1.png</key>
+            <key>0.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -19,7 +19,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>10.png</key>
+            <key>1.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -30,11 +30,11 @@
                 <key>spriteSourceSize</key>
                 <string>{50,50}</string>
                 <key>textureRect</key>
-                <string>{{469,1},{50,50}}</string>
+                <string>{{53,1},{50,50}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>11.png</key>
+            <key>10.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -49,7 +49,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>12.png</key>
+            <key>11.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -64,7 +64,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>13.png</key>
+            <key>12.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -79,7 +79,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>14.png</key>
+            <key>13.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -94,7 +94,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>15.png</key>
+            <key>14.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -106,6 +106,21 @@
                 <string>{50,50}</string>
                 <key>textureRect</key>
                 <string>{{729,1},{50,50}}</string>
+                <key>textureRotated</key>
+                <false/>
+            </dict>
+            <key>15.png</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>spriteOffset</key>
+                <string>{0,0}</string>
+                <key>spriteSize</key>
+                <string>{50,50}</string>
+                <key>spriteSourceSize</key>
+                <string>{50,50}</string>
+                <key>textureRect</key>
+                <string>{{573,1},{50,50}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -154,7 +169,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>2.png</key>
+            <key>19.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -165,11 +180,11 @@
                 <key>spriteSourceSize</key>
                 <string>{50,50}</string>
                 <key>textureRect</key>
-                <string>{{53,1},{50,50}}</string>
+                <string>{{937,1},{50,50}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>3.png</key>
+            <key>2.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -184,7 +199,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>4.png</key>
+            <key>3.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -199,7 +214,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>5.png</key>
+            <key>4.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -214,7 +229,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>6.png</key>
+            <key>5.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -229,7 +244,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>7.png</key>
+            <key>6.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -244,7 +259,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>8.png</key>
+            <key>7.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -259,7 +274,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>9.png</key>
+            <key>8.png</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -271,6 +286,21 @@
                 <string>{50,50}</string>
                 <key>textureRect</key>
                 <string>{{417,1},{50,50}}</string>
+                <key>textureRotated</key>
+                <false/>
+            </dict>
+            <key>9.png</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>spriteOffset</key>
+                <string>{0,0}</string>
+                <key>spriteSize</key>
+                <string>{50,50}</string>
+                <key>spriteSourceSize</key>
+                <string>{50,50}</string>
+                <key>textureRect</key>
+                <string>{{469,1},{50,50}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -286,9 +316,9 @@
             <key>realTextureFileName</key>
             <string>buff.png</string>
             <key>size</key>
-            <string>{936,52}</string>
+            <string>{988,52}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:38b2670554e9e23a8e301cc9b7ec6d3c:ff5fb3ef4466eef6eb8e3e8bccb98a47:24dc121a0f32ac648be09fd15ea2e505$</string>
+            <string>$TexturePacker:SmartUpdate:a01d01fe50cd22393cd58117007f49ae:79e8dc41cacc4227f73bbb10a6981ff7:24dc121a0f32ac648be09fd15ea2e505$</string>
             <key>textureFileName</key>
             <string>buff.png</string>
         </dict>
