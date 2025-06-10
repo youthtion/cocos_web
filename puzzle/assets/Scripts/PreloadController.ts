@@ -18,10 +18,14 @@ export class PreloadController extends Component {
     //支援模式處理
     loadQueryString(_p:URLSearchParams)
     {
-        if(_p.has('b') && _p.has('r') && _p.has('g') && _p.has('o') && _p.has('p')){
+        if(_p.has('b') && _p.has('h') && _p.has('r') && _p.has('g') && _p.has('o') && _p.has('p')){
             //檢查有無參數及各參數是否合理
             let board_len = parseInt(_p.get('b'));
             if(isNaN(board_len) || board_len < MIN_BOARD_LENGTH || board_len > MAX_BOARD_LENGTH){
+                return;
+            }
+            let hue = parseInt(_p.get('h'));
+            if(isNaN(hue) || hue < 0){
                 return;
             }
             let rotate = parseInt(_p.get('r'));
@@ -45,6 +49,7 @@ export class PreloadController extends Component {
             }
             //參數加入設定
             GameModel.setBoardLength(board_len);
+            GameModel.setBuff(EBuffType.BD_HUE, hue);
             GameModel.setBuff(EBuffType.BD_ROTATE, rotate);
             GameModel.setBuff(EBuffType.BD_GRAVITY, gravity);
             //參數指定缺格位置
@@ -74,9 +79,9 @@ export class PreloadController extends Component {
     setQueryString()
     {
         //生成網址後query string
-        let query_str = 'https://youthtion.github.io/cocos_web/puzzle?'; //開頭
         let board = GameModel.getBoard().map(v => v.slice());
-        query_str += 'b=' + board.length.toString(); //底板大小
+        let query_str = 'b=' + board.length.toString(); //底板大小
+        query_str += '&h=' + GameModel.getBuff(EBuffType.BD_HUE).toString();     //色差buff
         query_str += '&r=' + GameModel.getBuff(EBuffType.BD_ROTATE).toString();  //旋轉buff
         query_str += '&g=' + GameModel.getBuff(EBuffType.BD_GRAVITY).toString(); //重力buff
         //缺格位置

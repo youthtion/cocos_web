@@ -5,6 +5,7 @@ import { BuffController } from './BuffController'
 import { PreloadController } from './PreloadController'
 const { ccclass, property } = _decorator;
 
+const DOMAIN = 'https://youthtion.github.io/cocos_web/puzzle';
 const BOARD_COLOR = new Color(64, 64, 64); //棋盤顏色
 const OBSTACLE_COLOR = new Color(0, 0, 0);
 
@@ -384,7 +385,7 @@ export class GameController extends Component {
             this.screenshotBtn.active = _state == EGameState.GS_HELP;
         }
         if(this.shareEdit){
-            this.shareEdit.string = '' + GameModel.getQueryString();
+            this.shareEdit.string = DOMAIN + '?' + GameModel.getQueryString();
         }
     }
 }

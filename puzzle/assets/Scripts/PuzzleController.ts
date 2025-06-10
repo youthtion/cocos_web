@@ -63,7 +63,7 @@ export class PuzzleController extends Component {
                     cell.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);     //拼圖放下事件(同input, 游標在CELL上時處理)
                 }
             }
-            puzzle.setPosition((board.length * CELL_WIDTH * (-1)), 0, 0);
+            puzzle.setPosition((board.length * CELL_WIDTH * (-1)), (board.length * CELL_WIDTH / puzzles.length) * i - board.length * CELL_WIDTH * 0.5, 0);
             this.node.addChild(puzzle);
         }
     }
