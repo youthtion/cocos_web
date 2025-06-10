@@ -1,7 +1,8 @@
 import { _decorator, Component, Node, Prefab, instantiate, Sprite, Label, EditBox, Color } from 'cc';
-import { MAX_BOARD_LENGTH, MIN_BOARD_LENGTH, CELL_WIDTH, ADD_NEAR_RATE, EGameEvents, EBuffType, GameModel } from './GameModel'
+import { CELL_WIDTH, ADD_NEAR_RATE, EGameState, EGameEvents, EBuffType, GameModel } from './GameModel'
 import { PuzzleController } from './PuzzleController'
 import { BuffController } from './BuffController'
+import { PreloadController } from './PreloadController'
 const { ccclass, property } = _decorator;
 
 const BOARD_COLOR = new Color(64, 64, 64); //棋盤顏色
@@ -16,66 +17,65 @@ export class GameController extends Component {
     private puzzleCtrl:PuzzleController|null = null;
     @property({type:BuffController})
     private buffCtrl:BuffController|null = null;
+    @property({type:PreloadController})
+    private proloadCtrl:PreloadController|null = null;
     @property({type:Node})
-    public buffMenu:Node|null = null;
+    private buffMenu:Node|null = null;
     @property({type:Node})
-    public btnStart:Node|null = null;
+    private btnStart:Node|null = null;
     @property({type:Label})
-    public titleLabel:Label|null = null;
+    private titleLabel:Label|null = null;
     @property({type:Label})
-    public stageLabel:Label|null = null;
+    private stageLabel:Label|null = null;
     @property({type:Node})
-    public shareBtn:Node|null = null;
+    private shareBtn:Node|null = null;
     @property({type:Node})
-    public shareMenu:Node|null = null;
+    private shareMenu:Node|null = null;
     @property({type:EditBox})
-    public shareEdit:EditBox|null = null;
+    private shareEdit:EditBox|null = null;
     @property({type:Node})
-    public screenshotBtn:Node|null = null;
+    private screenshotBtn:Node|null = null;
 
     start()
     {
-        this.checkHelpMode();
+        this.proloadCtrl?.node.on(EGameEvents.GE_PRELOADED, this.onPreloadData, this);
         this.buffCtrl?.node.on(EGameEvents.GE_ADD_BUFF, this.onStartButtonClicked, this);
     }
 
-    //各場開始
-    restart()
+    changeGameState(_state:EGameState)
     {
-        this.setMenuVisible(false); //遊戲進行, 隱藏選單
-        //更新棋盤大小並初始化單局資訊
-        if(this.stageLabel){
-            this.stageLabel.string = 'Stage' + GameModel.getStage();
+        switch(_state){
+            //場間階段
+            case EGameState.GS_BUFF:
+                GameModel.addStage();
+                GameModel.removeBuff(EBuffType.BD_ROTATE);  //清除單場buff
+                GameModel.removeBuff(EBuffType.BD_GRAVITY); //同上
+                this.buffCtrl?.generateBuffList();
+                this.buffCtrl?.showBuffBtn();
+                this.puzzleCtrl?.setEventsActive(false);
+                this.setEventsActive(false);
+                break;
+            //各場開始
+            case EGameState.GS_START:
+                //產生新一場資訊並初始化單局資訊
+                this.initBoard();
+                this.generatePuzzle();
+                this.puzzleCtrl?.initPuzzle();
+                this.puzzleCtrl?.setEventsActive(true);
+                this.proloadCtrl?.setQueryString();
+                this.setEventsActive(true);
+                break;
+            //支援模式
+            case EGameState.GS_HELP:
+                //預讀單場資訊, 從生成實體開始初始化單局資訊
+                this.puzzleCtrl?.initPuzzle();
+                this.puzzleCtrl?.setEventsActive(true);
+                this.proloadCtrl?.setQueryString();
+                this.setEventsActive(true);
+                GameModel.setHelpMode(true);
+                break;
         }
-        this.initBoard();
-        this.generatePuzzle();
-        this.puzzleCtrl?.initPuzzle();
-        this.puzzleCtrl?.setEventsActive(true);
-        this.setEventsActive(true);
-    }
-
-    //場間階段
-    pause()
-    {
-        //叫出選單選擇BUFF
-        this.setMenuVisible(true);
-        if(this.btnStart){
-            this.btnStart.active = false;
-        }
-        if(this.titleLabel){
-            this.titleLabel.string = '';
-        }
-        if(this.stageLabel){
-            this.stageLabel.string = '';
-        }
-        GameModel.addStage();
-        //清除單場buff
-        GameModel.removeBuff(EBuffType.BD_ROTATE);
-        GameModel.removeBuff(EBuffType.BD_GRAVITY);
-        this.buffCtrl?.generateBuffList();
-        this.buffCtrl?.showBuffBtn();
-        this.puzzleCtrl?.setEventsActive(false);
-        this.setEventsActive(false);
+        this.setMenuVisible(_state);
     }
 
     update(deltaTime: number){}
@@ -313,7 +313,33 @@ export class GameController extends Component {
 
     onStartButtonClicked()
     {
-        this.restart();
+        this.changeGameState(EGameState.GS_START);
+    }
+
+    onShareBtnClick()
+    {
+        if(this.shareMenu){
+            if(this.shareMenu.active == false){
+                this.shareMenu.active = true;
+            }
+            else{
+                this.shareMenu.active = false;
+            }
+        }
+    }
+
+    //複製query string
+    async onCopyBtnClick()
+    {
+        if(this.shareEdit){
+            await navigator.clipboard.writeText(this.shareEdit.string);
+        }
+    }
+
+    onPreloadData(_obstacle_set:Set<number>)
+    {
+        this.initBoard(_obstacle_set);
+        this.changeGameState(EGameState.GS_HELP);
     }
 
     //勝利判定
@@ -330,147 +356,35 @@ export class GameController extends Component {
                 }
             }
         }
-        this.pause();
+        this.changeGameState(EGameState.GS_BUFF);
     }
 
-    //設定場間/場中選單
-    setMenuVisible(_pause: boolean)
+    //設定個狀態各類選單
+    setMenuVisible(_state:EGameState)
     {
-        //場間顯示buff選單, 場中隱藏
-        if(this.buffMenu){
-            this.buffMenu.active = _pause;
+        if(this.stageLabel){
+            this.stageLabel.string = _state == EGameState.GS_START ? 'Stage' + GameModel.getStage() : '';
         }
-        //場間隱藏集思按鈕, 場中顯示
+        if(this.buffMenu){
+            this.buffMenu.active = _state == EGameState.GS_BUFF;
+        }
         if(this.shareBtn){
-            this.shareBtn.active = !_pause;
+            this.shareBtn.active = _state != EGameState.GS_BUFF;
         }
         if(this.shareMenu){
             this.shareMenu.active = false;
         }
-    }
-
-    //集思模式處理
-    checkHelpMode()
-    {
-        if (typeof window !== 'undefined') {
-            let p = new URLSearchParams(window.location.search); //尋找網址後query string
-            if(p.has('b') && p.has('r') && p.has('g') && p.has('o') && p.has('p')){
-                //檢查有無參數及各參數是否合理
-                let board_len = parseInt(p.get('b'));
-                if(isNaN(board_len) || board_len < MIN_BOARD_LENGTH || board_len > MAX_BOARD_LENGTH){
-                    return;
-                }
-                let rotate = parseInt(p.get('r'));
-                if(isNaN(rotate) || rotate < 0 || rotate > 1){
-                    return;
-                }
-                let gravity = parseInt(p.get('g'));
-                if(isNaN(gravity) || gravity < -1 || gravity > 1){
-                    return;
-                }
-                let obstacles_str = p.get('o');
-                if(!/^\d+$/.test(obstacles_str) || (obstacles_str.length % 2 != 0 && obstacles_str != '0')){
-                    return;
-                }
-                let puzzles_strs = p.getAll('p');
-                for(let i = 0; i < puzzles_strs.length; i++){
-                    let puzzles_str = puzzles_strs[i];
-                    if(!/^\d+$/.test(puzzles_str) || puzzles_str.length % 2 != 0){
-                        return;
-                    }
-                }
-                //參數加入設定
-                GameModel.setBoardLength(board_len);
-                GameModel.setBuff(EBuffType.BD_ROTATE, rotate);
-                GameModel.setBuff(EBuffType.BD_GRAVITY, gravity);
-                //模式UI顯示&隱藏
-                this.setMenuVisible(false);
-                if(this.stageLabel){
-                    this.stageLabel.string = '';
-                }
-                if(this.screenshotBtn){
-                    this.screenshotBtn.active = true;
-                }
-                //參數指定缺格位置
-                let obstacle_set:Set<number> = new Set<number>()
-                if(obstacles_str != '0'){
-                    for(let i = 0; i < obstacles_str.length; i += 2){
-                        let [x, y] = [parseInt(obstacles_str[i]), parseInt(obstacles_str[i + 1])]; //xy一組
-                        obstacle_set.add(x * board_len + y);
-                    }
-                }
-                this.initBoard(obstacle_set);
-                //參數指定拼圖形狀
-                let puzzles:number[][][] = [];
-                for(let i = 0; i < puzzles_strs.length; i++){
-                    let puzzles_str = puzzles_strs[i];
-                    let puzzle:number[][] = [];
-                    for(let j = 0; j < puzzles_str.length; j += 2){
-                        let [x, y] = [parseInt(puzzles_str[j]), parseInt(puzzles_str[j + 1])]; //xy一組
-                        puzzle.push([x, y]);
-                    }
-                    puzzles.push(puzzle);
-                }
-                GameModel.setPuzzles(puzzles);
-                this.puzzleCtrl?.initPuzzle();
-                this.puzzleCtrl?.setEventsActive(true);
-                this.setEventsActive(true);
-                GameModel.setHelpMode(true);
-            }
+        if(this.btnStart){
+            this.btnStart.active = false;
         }
-    }
-
-    onShareBtnClick()
-    {
-        if(this.shareMenu){
-            if(this.shareMenu.active == false){
-                this.shareMenu.active = true;
-                if(this.shareEdit){
-                    //生成網址後query string
-                    let query_str = 'https://youthtion.github.io/cocos_web/puzzle?'; //開頭
-                    let board = GameModel.getBoard().map(v => v.slice());
-                    query_str += 'b=' + String(board.length); //底板大小
-                    query_str += '&r=' + String(GameModel.getBuff(EBuffType.BD_ROTATE));  //旋轉buff
-                    query_str += '&g=' + String(GameModel.getBuff(EBuffType.BD_GRAVITY)); //重力buff
-                    //缺格位置
-                    let o = '';
-                    for(let i = 0; i < board.length; i++){
-                        for(let j = 0; j < board[i].length; j++){
-                            if(board[i][j] == Infinity){
-                                o += String(i) + String(j); //xy一組
-                            }
-                        }
-                    }
-                    //無缺格, 參數0
-                    if(o == ''){
-                        query_str += '&o=0';
-                    }
-                    else{
-                        query_str += '&o=' + o;
-                    }
-                    //拼圖形狀
-                    let puzzles = GameModel.getPuzzles().map(v0 => v0.map(v1 => v1.slice()));
-                    for(let i = 0; i < puzzles.length; i++){
-                        query_str += '&p=';
-                        for(let j = 0; j < puzzles[i].length; j++){
-                            let [x, y] = puzzles[i][j];
-                            query_str += String(x) + String(y); //xy一組
-                        }
-                    }
-                    this.shareEdit.string = query_str;
-                }
-            }
-            else{
-                this.shareMenu.active = false;
-            }
+        if(this.titleLabel){
+            this.titleLabel.string = '';
         }
-    }
-
-    //複製query string
-    async onCopyBtnClick()
-    {
+        if(this.screenshotBtn){
+            this.screenshotBtn.active = _state == EGameState.GS_HELP;
+        }
         if(this.shareEdit){
-            await navigator.clipboard.writeText(this.shareEdit.string);
+            this.shareEdit.string = '' + GameModel.getQueryString();
         }
     }
 }

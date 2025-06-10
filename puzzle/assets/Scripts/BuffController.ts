@@ -60,31 +60,31 @@ const BUFF_TEXT: Record<EBuffUIType, string> = {
 export class BuffController extends Component {
 
     @property({type:Node})
-    public refreshBtn:Node|null = null;
+    private refreshBtn:Node|null = null;
     @property({type:Label})
-    public freshLabel:Label|null = null;
+    private freshLabel:Label|null = null;
     @property({type:Node})
-    public buffBtn1:Node|null = null;
+    private buffBtn1:Node|null = null;
     @property({type:Node})
-    public buffBtn2:Node|null = null;
+    private buffBtn2:Node|null = null;
     @property({type:Node})
-    public buffBtn3:Node|null = null;
+    private buffBtn3:Node|null = null;
     @property({type:Label})
-    public buffLabel1:Label|null = null;
+    private buffLabel1:Label|null = null;
     @property({type:Label})
-    public buffLabel2:Label|null = null;
+    private buffLabel2:Label|null = null;
     @property({type:Label})
-    public buffLabel3:Label|null = null;
+    private buffLabel3:Label|null = null;
     @property({type:Sprite})
-    public buffSprite1:Sprite|null = null;
+    private buffSprite1:Sprite|null = null;
     @property({type:Sprite})
-    public buffSprite2:Sprite|null = null;
+    private buffSprite2:Sprite|null = null;
     @property({type:Sprite})
-    public buffSprite3:Sprite|null = null;
+    private buffSprite3:Sprite|null = null;
     @property({type:CCInteger})
-    public buffSpace:number = 0;
+    private buffSpace:number = 0;
     @property({type:SpriteAtlas})
-    public buffAtlas:SpriteAtlas|null = null!;
+    private buffAtlas:SpriteAtlas|null = null!;
 
     start()
     {

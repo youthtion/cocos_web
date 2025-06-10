@@ -5,7 +5,7 @@ const { ccclass, property } = _decorator;
 export class ScreenshotController extends Component {
 
     @property(Camera)
-    screenshotCamera:Camera|null = null; //只照GAME層的相機(無UI)
+    private screenshotCamera:Camera|null = null; //只照GAME層的相機(無UI)
 
     start() {}
 
