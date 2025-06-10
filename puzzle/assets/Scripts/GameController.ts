@@ -17,7 +17,7 @@ export class GameController extends Component {
     @property({type:BuffController})
     private buffCtrl:BuffController|null = null;
     @property({type:Node})
-    public startMenu:Node|null = null;
+    public buffMenu:Node|null = null;
     @property({type:Node})
     public btnStart:Node|null = null;
     @property({type:Label})
@@ -39,7 +39,7 @@ export class GameController extends Component {
         this.buffCtrl?.node.on(EGameEvents.GE_ADD_BUFF, this.onStartButtonClicked, this);
     }
 
-    //初始化單局資訊
+    //各場開始
     restart()
     {
         this.setMenuVisible(false); //遊戲進行, 隱藏選單
@@ -54,9 +54,10 @@ export class GameController extends Component {
         this.setEventsActive(true);
     }
 
+    //場間階段
     pause()
     {
-        //場間階段, 叫出選單選擇BUFF
+        //叫出選單選擇BUFF
         this.setMenuVisible(true);
         if(this.btnStart){
             this.btnStart.active = false;
@@ -68,6 +69,7 @@ export class GameController extends Component {
             this.stageLabel.string = '';
         }
         GameModel.addStage();
+        //清除單場buff
         GameModel.removeBuff(EBuffType.BD_ROTATE);
         GameModel.removeBuff(EBuffType.BD_GRAVITY);
         this.buffCtrl?.generateBuffList();
@@ -82,7 +84,7 @@ export class GameController extends Component {
     {
         if(_set){
             this.puzzleCtrl?.node.on(EGameEvents.GE_PLACE_PUZZLE, this.onPlacePuzzle, this); //接收拼圖放上棋盤事件
-            this.puzzleCtrl?.node.on(EGameEvents.GE_PICK_PUZZLE, this.onPickPuzzle, this); //接收拼圖移出棋盤事件
+            this.puzzleCtrl?.node.on(EGameEvents.GE_PICK_PUZZLE, this.onPickPuzzle, this);   //接收拼圖移出棋盤事件
         }
         else{
             this.puzzleCtrl?.node.off(EGameEvents.GE_PLACE_PUZZLE, this.onPlacePuzzle, this);
@@ -245,7 +247,8 @@ export class GameController extends Component {
             }
         }
         let board:number[][] = GameModel.getBoard().map(v => v.slice());  //複製棋盤資訊
-        let dy:number|null = null;
+        let dy:number|null = null; //計算額外修改目標y軸移動格數(重力buff)
+        //重力buff的目標y軸點(重力為底板底, 浮力為底板頂)
         let tar_y = 0;
         if(gravity > 0){
             tar_y = min_y - 0;
@@ -253,6 +256,7 @@ export class GameController extends Component {
         else if(gravity < 0){
             tar_y = board.length - 1 - max_y;
         }
+        //從放置位往上(下)找到可放置拼圖的位置
         for(let i = 0; i <= tar_y; i++){
             let fit_cnt = 0;
             for(let j = 0; j < _fit_cell.length; j++){
@@ -264,6 +268,7 @@ export class GameController extends Component {
                     break;
                 }
             }
+            //遍歷拼圖各cell可放置為可放置點, 紀錄dy
             if(fit_cnt == _fit_cell.length){
                 dy = i * gravity;
             }
@@ -328,11 +333,14 @@ export class GameController extends Component {
         this.pause();
     }
 
+    //設定場間/場中選單
     setMenuVisible(_pause: boolean)
     {
-        if(this.startMenu){
-            this.startMenu.active = _pause;
+        //場間顯示buff選單, 場中隱藏
+        if(this.buffMenu){
+            this.buffMenu.active = _pause;
         }
+        //場間隱藏集思按鈕, 場中顯示
         if(this.shareBtn){
             this.shareBtn.active = !_pause;
         }
@@ -341,11 +349,13 @@ export class GameController extends Component {
         }
     }
 
+    //集思模式處理
     checkHelpMode()
     {
         if (typeof window !== 'undefined') {
-            let p = new URLSearchParams(window.location.search); //url query string
+            let p = new URLSearchParams(window.location.search); //尋找網址後query string
             if(p.has('b') && p.has('r') && p.has('g') && p.has('o') && p.has('p')){
+                //檢查有無參數及各參數是否合理
                 let board_len = parseInt(p.get('b'));
                 if(isNaN(board_len) || board_len < MIN_BOARD_LENGTH || board_len > MAX_BOARD_LENGTH){
                     return;
@@ -369,9 +379,11 @@ export class GameController extends Component {
                         return;
                     }
                 }
+                //參數加入設定
                 GameModel.setBoardLength(board_len);
                 GameModel.setBuff(EBuffType.BD_ROTATE, rotate);
                 GameModel.setBuff(EBuffType.BD_GRAVITY, gravity);
+                //模式UI顯示&隱藏
                 this.setMenuVisible(false);
                 if(this.stageLabel){
                     this.stageLabel.string = '';
@@ -379,20 +391,22 @@ export class GameController extends Component {
                 if(this.screenshotBtn){
                     this.screenshotBtn.active = true;
                 }
+                //參數指定缺格位置
                 let obstacle_set:Set<number> = new Set<number>()
                 if(obstacles_str != '0'){
                     for(let i = 0; i < obstacles_str.length; i += 2){
-                        let [x, y] = [parseInt(obstacles_str[i]), parseInt(obstacles_str[i + 1])];
+                        let [x, y] = [parseInt(obstacles_str[i]), parseInt(obstacles_str[i + 1])]; //xy一組
                         obstacle_set.add(x * board_len + y);
                     }
                 }
                 this.initBoard(obstacle_set);
+                //參數指定拼圖形狀
                 let puzzles:number[][][] = [];
                 for(let i = 0; i < puzzles_strs.length; i++){
                     let puzzles_str = puzzles_strs[i];
                     let puzzle:number[][] = [];
                     for(let j = 0; j < puzzles_str.length; j += 2){
-                        let [x, y] = [parseInt(puzzles_str[j]), parseInt(puzzles_str[j + 1])];
+                        let [x, y] = [parseInt(puzzles_str[j]), parseInt(puzzles_str[j + 1])]; //xy一組
                         puzzle.push([x, y]);
                     }
                     puzzles.push(puzzle);
@@ -412,31 +426,35 @@ export class GameController extends Component {
             if(this.shareMenu.active == false){
                 this.shareMenu.active = true;
                 if(this.shareEdit){
-                    let query_str = 'https://youthtion.github.io/cocos_web/puzzle?';
+                    //生成網址後query string
+                    let query_str = 'https://youthtion.github.io/cocos_web/puzzle?'; //開頭
                     let board = GameModel.getBoard().map(v => v.slice());
-                    query_str += 'b=' + String(board.length);
-                    query_str += '&r=' + String(GameModel.getBuff(EBuffType.BD_ROTATE));
-                    query_str += '&g=' + String(GameModel.getBuff(EBuffType.BD_GRAVITY));
+                    query_str += 'b=' + String(board.length); //底板大小
+                    query_str += '&r=' + String(GameModel.getBuff(EBuffType.BD_ROTATE));  //旋轉buff
+                    query_str += '&g=' + String(GameModel.getBuff(EBuffType.BD_GRAVITY)); //重力buff
+                    //缺格位置
                     let o = '';
                     for(let i = 0; i < board.length; i++){
                         for(let j = 0; j < board[i].length; j++){
                             if(board[i][j] == Infinity){
-                                o += String(i) + String(j);
+                                o += String(i) + String(j); //xy一組
                             }
                         }
                     }
+                    //無缺格, 參數0
                     if(o == ''){
                         query_str += '&o=0';
                     }
                     else{
                         query_str += '&o=' + o;
                     }
+                    //拼圖形狀
                     let puzzles = GameModel.getPuzzles().map(v0 => v0.map(v1 => v1.slice()));
                     for(let i = 0; i < puzzles.length; i++){
                         query_str += '&p=';
                         for(let j = 0; j < puzzles[i].length; j++){
                             let [x, y] = puzzles[i][j];
-                            query_str += String(x) + String(y);
+                            query_str += String(x) + String(y); //xy一組
                         }
                     }
                     this.shareEdit.string = query_str;
@@ -448,6 +466,7 @@ export class GameController extends Component {
         }
     }
 
+    //複製query string
     async onCopyBtnClick()
     {
         if(this.shareEdit){

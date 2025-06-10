@@ -63,9 +63,6 @@ export class PuzzleController extends Component {
                     cell.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);     //拼圖放下事件(同input, 游標在CELL上時處理)
                 }
             }
-            if(GameModel.getBuff(EBuffType.BD_ROTATE) == 0){
-                puzzle.eulerAngles = new Vec3(puzzle.eulerAngles.x, puzzle.eulerAngles.y, puzzle.eulerAngles.z + 90 * Math.floor(Math.random() * 4));
-            }
             puzzle.setPosition((board.length * CELL_WIDTH * (-1)), 0, 0);
             this.node.addChild(puzzle);
         }

@@ -5,18 +5,21 @@ const { ccclass, property } = _decorator;
 export class ScreenshotController extends Component {
 
     @property(Camera)
-    screenshotCamera:Camera|null = null;
+    screenshotCamera:Camera|null = null; //只照GAME層的相機(無UI)
 
     start() {}
 
     update(deltaTime: number) {}
 
+    //截圖按鈕
     onScreenshotClick()
     {
+        //截圖相機的targetTexture
         let rt:RenderTexture|null = this.screenshotCamera.targetTexture;
         if(!rt){
             return;
         }
+        //RenderTexture轉換成canvas圖片
         let [w, h] = [rt.width, rt.height];
         let px = rt.readPixels();
         let canvas = document.createElement('canvas');
@@ -34,6 +37,7 @@ export class ScreenshotController extends Component {
         canvas.toBlob(this.toBlobCallBack, 'image/png');
     }
 
+    //複製到剪貼簿
     async toBlobCallBack(_blob:Blob)
     {
         if(_blob){

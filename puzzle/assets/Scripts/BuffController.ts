@@ -2,12 +2,13 @@ import { _decorator, Component, Node, Label, CCInteger, SpriteAtlas, Sprite } fr
 import { MIN_BOARD_LENGTH, MAX_BOARD_LENGTH, ADD_NEAR_RATE, EGameEvents, EBuffType, GameModel } from './GameModel'
 const { ccclass, property } = _decorator;
 
-const MAX_SIZE_BUFF = 3;
-const MIN_SIZE_BUFF = -3;
-const MAX_OBSTACLE_BUFF = 4;
-const MAX_ONECELL_BUFF = 5;
-const MAX_BUFF_NUM = 3;
+const MAX_SIZE_BUFF = 3;     //小方塊增加buff層數限制
+const MIN_SIZE_BUFF = -3;    //大方塊增加buff層數限制
+const MAX_OBSTACLE_BUFF = 4; //底板缺格buff層數限制
+const MAX_ONECELL_BUFF = 5;  //1x1方塊buff層數限制
+const MAX_BUFF_NUM = 3;      //最大選項數量
 
+//介面buff類型, id對照buff圖集的編號
 enum EBuffUIType{
     BU_GROW_STOP,
     BU_GROW_DEC,
@@ -31,6 +32,7 @@ enum EBuffUIType{
     BU_PASS,
 }
 
+//介面buff顯示文字, 對照EBuffUIType
 const BUFF_TEXT: Record<EBuffUIType, string> = {
     [EBuffUIType.BU_GROW_STOP]:'底板不擴大(1場)',
     [EBuffUIType.BU_GROW_DEC]:'底板縮小',
@@ -44,9 +46,9 @@ const BUFF_TEXT: Record<EBuffUIType, string> = {
     [EBuffUIType.BU_LOSE_1X1_PUZZLE]:'失去1x1方塊\n出現底板縮小',
     [EBuffUIType.BU_CANNOT_ROTATE]:'不可旋轉(1場)\n出現底板縮小',
     [EBuffUIType.BU_LESS_BUFF]:'選項減少\n獲得刷新次數',
-    [EBuffUIType.BU_ONE_BUFF]:'',
-    [EBuffUIType.BU_TWO_BUFF]:'',
-    [EBuffUIType.BU_THREE_BUFF]:'',
+    [EBuffUIType.BU_ONE_BUFF]:'',   //圖集id使用, 無顯示文字
+    [EBuffUIType.BU_TWO_BUFF]:'',   //同上
+    [EBuffUIType.BU_THREE_BUFF]:'', //同上
     [EBuffUIType.BU_MORE_BUFF]:'選項增加',
     [EBuffUIType.BU_REFRESH]:'刷新選項',
     [EBuffUIType.BU_GRAVITY]:'產生重力(1場)',
@@ -120,11 +122,13 @@ export class BuffController extends Component {
     showBuffBtn()
     {
         for(let i = 0; i < this.buffBtns.length; i++){
+            //根據選項buff量顯示buff按鈕
             if(this.buffNum > i){
                 this.buffBtns[i].active = true;
-                this.buffBtns[i].setPosition(this.buffSpace * (this.buffNum - 1) * (-0.5) + i * this.buffSpace, 0, 0);
+                this.buffBtns[i].setPosition(this.buffSpace * (this.buffNum - 1) * (-0.5) + i * this.buffSpace, 0, 0); //位置平均分散設定
                 this.buffLabels[i].string = BUFF_TEXT[this.buffList[i]];
                 let atlas_id = this.buffList[i];
+                //變更選項數量的圖示根據選項數量顯示
                 if(this.buffList[i] == EBuffUIType.BU_LESS_BUFF){
                     atlas_id = EBuffUIType.BU_BUFF_START + (this.buffNum - 1);
                 }
@@ -137,6 +141,7 @@ export class BuffController extends Component {
                 this.buffBtns[i].active = false;
             }
         }
+        //根據持有刷新buff數顯示刷新buff按鈕與次數
         if(this.refreshBtn){
             this.refreshBtn.active = this.refreshNum > 0;
             if(this.freshLabel){
@@ -145,11 +150,13 @@ export class BuffController extends Component {
         }
     }
 
+    //選擇第N個buff按鈕
     onBuffClick(_e:Event, _id:number)
     {
         this.setBuff(_id);
     }
 
+    //刷新buff
     onRefreshClick()
     {
         this.refreshNum -= 1;
@@ -157,9 +164,11 @@ export class BuffController extends Component {
         this.showBuffBtn();
     }
 
+    //拼圖生成時長為N塊的機率(大小方塊buff調整)
     getBuffAddNearRate():number[]
     {
         let add_near_rate = ADD_NEAR_RATE.slice();
+        //大小方塊buff依層數調整面積4以上方塊的生成機率
         for(let i = 3; i < add_near_rate.length; i++){
             add_near_rate[i] += GameModel.getBuff(EBuffType.BD_SIZE) * 0.1;
             if(add_near_rate[i] > 1.0){
@@ -172,6 +181,7 @@ export class BuffController extends Component {
         return add_near_rate;
     }
 
+    //選擇指定buff
     setBuff(_id:number)
     {
         let type:EBuffUIType = this.buffList[_id];
@@ -234,14 +244,17 @@ export class BuffController extends Component {
                 GameModel.setBuff(EBuffType.BD_GRAVITY, -1);
                 break;
         }
+        //底板成長buff在非選擇底板相關buff後固定成長1
         if(type > EBuffUIType.BU_GROW_DEC && GameModel.getBoardLength() < MAX_BOARD_LENGTH){
             GameModel.addBoardLength();
         }
+        //處理完觸發下場遊戲邏輯
         this.node.emit(EGameEvents.GE_ADD_BUFF);
     }
 
     generateBuffList()
     {
+        //判定可加入隨機列表的buff
         this.buffList = [];
         if(GameModel.getBoardLength() < MAX_BOARD_LENGTH){
             this.buffList.push(EBuffUIType.BU_GROW_STOP);
@@ -285,6 +298,7 @@ export class BuffController extends Component {
             this.buffList.push(EBuffUIType.BU_BUOYANCY);
         }
         this.buffList.push(EBuffUIType.BU_PASS);
+        //加入完將列表隨機排序
         for(let i = 0; i < this.buffList.length; i++){
             let rand = Math.floor(Math.random() * (this.buffList.length - i)) + i;
             [this.buffList[i], this.buffList[rand]] = [this.buffList[rand], this.buffList[i]];
@@ -294,7 +308,7 @@ export class BuffController extends Component {
     private buffBtns:Node[] = [];
     private buffLabels:Label[] = [];
     private buffSprites:Sprite[] = [];
-    private buffList:EBuffUIType[] = [];
-    private buffNum:number = 2;
-    private refreshNum:number = 0;
+    private buffList:EBuffUIType[] = []; //符合加入至隨機列表的buff
+    private buffNum:number = 2;    //buff選項數
+    private refreshNum:number = 0; //buff刷新數
 }

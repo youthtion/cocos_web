@@ -4,12 +4,14 @@ export const ADD_NEAR_RATE = [1.0, 1.0, 1.0, 0.7, 0.5, 0.3]; //拼圖生成時�
 export const MAX_BOARD_LENGTH = 10; //最大棋盤大小
 export const MIN_BOARD_LENGTH = 3;  //最小棋盤大小
 
+//emit事件
 export enum EGameEvents{
     GE_ADD_BUFF = 'onSetBuffFinish',
     GE_PICK_PUZZLE = 'onPickPuzzle',
     GE_PLACE_PUZZLE = 'onPlacePuzzle',
 }
 
+//buff種類
 export enum EBuffType{
     BD_SIZE,
     BD_HUE,
@@ -25,8 +27,8 @@ export class CGameModel{
     private stage:number = 1;          //關卡
     private board:number[][] = [];     //棋盤資訊(初始為-1填滿, 使用格填入)
     private puzzles:number[][][] = []; //拼圖資訊([第N個拼圖][第N個CELL][該CELL的x,y])
-    private buffData:number[] = new Array(EBuffType.BD_MAX).fill(0);
-    private helpMode:boolean = false;
+    private buffData:number[] = new Array(EBuffType.BD_MAX).fill(0); //buff資料, 預設各層初始為0
+    private helpMode:boolean = false;  //集思模式
 
     public addBoardLength() { this.boardLength++; }
     public decreaseBoardLength() { this.boardLength--; }
