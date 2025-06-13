@@ -111,6 +111,7 @@ export class GameController extends Component {
         let board_length = GameModel.getBoardLength(); //棋盤大小
         let board:number[][] = []; //空棋盤資訊
         this.node.removeAllChildren(); //清除棋盤節點
+        //根據缺格buff數生成底板缺格位置
         if(_obstacle_set.size == 0 && GameModel.getBuff(EBuffType.BD_OBSTACLE) > 0){
             let obstacle_buff = GameModel.getBuff(EBuffType.BD_OBSTACLE);
             let part_len = Math.floor(board_length * board_length / obstacle_buff);
@@ -162,6 +163,7 @@ export class GameController extends Component {
                     let puzzle_id = puzzles.length;
                     //將i,j格設定為拼圖第一個CELL
                     puzzles.push([[i, j]]);
+                    //先生成固定方塊(1x1 buff)
                     if(onecell_buff > 0){
                         board[i][j] = Infinity;
                         onecell_buff--;
