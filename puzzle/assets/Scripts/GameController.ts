@@ -132,7 +132,7 @@ export class GameController extends Component {
                         if(cell_sprite){
                             cell_sprite.color = OBSTACLE_COLOR;
                         }
-                        line.push(Infinity);
+                        line.push(Infinity); //缺格填入無限
                     }
                     else{
                         if(cell_sprite){
