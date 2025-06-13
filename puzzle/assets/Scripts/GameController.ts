@@ -150,7 +150,7 @@ export class GameController extends Component {
         this.node.setPosition(pos, pos, 0);
     }
 
-    //生成拼圖
+    //生成拼圖資訊
     generatePuzzle()
     {
         let board:number[][] = GameModel.getBoard().map(v => v.slice());
