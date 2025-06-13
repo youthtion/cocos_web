@@ -3,13 +3,11 @@ export const FIT_ALLOW = Math.floor(CELL_WIDTH / 4); //拼圖靠近吸附距離(
 export const ADD_NEAR_RATE = [1.0, 1.0, 1.0, 0.7, 0.5, 0.3]; //拼圖生成時長為N塊的機率
 export const MAX_BOARD_LENGTH = 10; //最大棋盤大小
 export const MIN_BOARD_LENGTH = 3;  //最小棋盤大小
-
-//遊戲狀態
-export enum EGameState{
-    GS_BUFF,
-    GS_START,
-    GS_HELP,
-}
+export const MAX_SIZE_BUFF = 3;     //小方塊增加buff層數限制
+export const MIN_SIZE_BUFF = -3;    //大方塊增加buff層數限制
+export const MAX_OBSTACLE_BUFF = 4; //底板缺格buff層數限制
+export const MAX_ONECELL_BUFF = 5;  //1x1方塊buff層數限制
+export const MAX_BUFF_NUM = 3;      //最大選項數量
 
 //emit事件
 export enum EGameEvents{
@@ -17,6 +15,14 @@ export enum EGameEvents{
     GE_PICK_PUZZLE = 'onPickPuzzle',
     GE_PLACE_PUZZLE = 'onPlacePuzzle',
     GE_PRELOADED = 'onFoundPreloadData',
+}
+
+//遊戲狀態
+export enum EGameState{
+    GS_BUFF,
+    GS_START,
+    GS_HELP,
+    GS_CONTINUE,
 }
 
 //buff種類
@@ -27,6 +33,8 @@ export enum EBuffType{
     BD_OBSTACLE,
     BD_ONECELL,
     BD_GRAVITY,
+    BD_REFRESH,
+    BD_BUFFNUM,
     BD_MAX,
 }
 
@@ -35,8 +43,8 @@ export class CGameModel{
     private stage:number = 1;          //關卡
     private board:number[][] = [];     //棋盤資訊(初始為-1填滿, 使用格填入)
     private puzzles:number[][][] = []; //拼圖資訊([第N個拼圖][第N個CELL][該CELL的x,y])
-    private buffData:number[] = new Array(EBuffType.BD_MAX).fill(0); //buff資料, 預設各層初始為0
-    private queryString:string = '';
+    private buffData: number[] = [0, 0, 0, 0, 0, 0, 0, 2]; //buff所有種類與初始值
+    private queryString:string = '';   //query string
     private helpMode:boolean = false;  //支援模式
 
     public addBoardLength() { this.boardLength++; }

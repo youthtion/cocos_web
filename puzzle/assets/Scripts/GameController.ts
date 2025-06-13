@@ -19,7 +19,7 @@ export class GameController extends Component {
     @property({type:BuffController})
     private buffCtrl:BuffController|null = null;
     @property({type:PreloadController})
-    private proloadCtrl:PreloadController|null = null;
+    private preloadCtrl:PreloadController|null = null;
     @property({type:Node})
     private buffMenu:Node|null = null;
     @property({type:Node})
@@ -39,7 +39,7 @@ export class GameController extends Component {
 
     start()
     {
-        this.proloadCtrl?.node.on(EGameEvents.GE_PRELOADED, this.onPreloadData, this);
+        this.preloadCtrl?.node.on(EGameEvents.GE_PRELOADED, this.onPreloadData, this);   //讀到query string或cookie
         this.buffCtrl?.node.on(EGameEvents.GE_ADD_BUFF, this.onStartButtonClicked, this);
     }
 
@@ -63,7 +63,8 @@ export class GameController extends Component {
                 this.generatePuzzle();
                 this.puzzleCtrl?.initPuzzle();
                 this.puzzleCtrl?.setEventsActive(true);
-                this.proloadCtrl?.setQueryString();
+                this.preloadCtrl?.setQueryString();
+                this.preloadCtrl?.saveCookie();
                 this.setEventsActive(true);
                 break;
             //支援模式
@@ -71,9 +72,17 @@ export class GameController extends Component {
                 //預讀單場資訊, 從生成實體開始初始化單局資訊
                 this.puzzleCtrl?.initPuzzle();
                 this.puzzleCtrl?.setEventsActive(true);
-                this.proloadCtrl?.setQueryString();
+                this.preloadCtrl?.setQueryString();
                 this.setEventsActive(true);
                 GameModel.setHelpMode(true);
+                break;
+            //讀取進度
+            case EGameState.GS_CONTINUE:
+                //預讀單場資訊, 從生成實體開始初始化單局資訊
+                this.puzzleCtrl?.initPuzzle();
+                this.puzzleCtrl?.setEventsActive(true);
+                this.preloadCtrl?.setQueryString();
+                this.setEventsActive(true);
                 break;
         }
         this.setMenuVisible(_state);
@@ -279,7 +288,7 @@ export class GameController extends Component {
         }
         //沒有可以放上的棋盤格, 回傳結果不更新棋盤資訊
         if(dy == null){
-            this.puzzleCtrl?.onPlacePuzzleCallback(dy);
+            this.puzzleCtrl?.onPlacePuzzleCallback(null);
             return;
         }
         let puzzle_id = parseInt(_name);  //傳入拼圖id字串改為數字
@@ -337,10 +346,11 @@ export class GameController extends Component {
         }
     }
 
-    onPreloadData(_obstacle_set:Set<number>)
+    onPreloadData(_obstacle_set:Set<number>, _state:EGameState)
     {
         this.initBoard(_obstacle_set);
-        this.changeGameState(EGameState.GS_HELP);
+        this.changeGameState(_state);
+        this.preloadCtrl?.node.off(EGameEvents.GE_PRELOADED, this.onPreloadData, this); //讀檔成功只要一次
     }
 
     //勝利判定
@@ -364,7 +374,7 @@ export class GameController extends Component {
     setMenuVisible(_state:EGameState)
     {
         if(this.stageLabel){
-            this.stageLabel.string = _state == EGameState.GS_START ? 'Stage' + GameModel.getStage() : '';
+            this.stageLabel.string = _state == EGameState.GS_START || _state == EGameState.GS_CONTINUE ? 'Stage' + GameModel.getStage() : '';
         }
         if(this.buffMenu){
             this.buffMenu.active = _state == EGameState.GS_BUFF;

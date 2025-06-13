@@ -1,12 +1,6 @@
-import { _decorator, Component, Node, Label, CCInteger, SpriteAtlas, Sprite } from 'cc';
-import { MIN_BOARD_LENGTH, MAX_BOARD_LENGTH, ADD_NEAR_RATE, EGameEvents, EBuffType, GameModel } from './GameModel'
+import { _decorator, Component, Node, Label, CCInteger, SpriteAtlas, Sprite, Game } from 'cc';
+import { MAX_BUFF_NUM, MAX_ONECELL_BUFF, MAX_OBSTACLE_BUFF, MAX_SIZE_BUFF, MIN_SIZE_BUFF, MIN_BOARD_LENGTH, MAX_BOARD_LENGTH, ADD_NEAR_RATE, EGameEvents, EBuffType, GameModel } from './GameModel'
 const { ccclass, property } = _decorator;
-
-const MAX_SIZE_BUFF = 3;     //小方塊增加buff層數限制
-const MIN_SIZE_BUFF = -3;    //大方塊增加buff層數限制
-const MAX_OBSTACLE_BUFF = 4; //底板缺格buff層數限制
-const MAX_ONECELL_BUFF = 5;  //1x1方塊buff層數限制
-const MAX_BUFF_NUM = 3;      //最大選項數量
 
 //介面buff類型, id對照buff圖集的編號
 enum EBuffUIType{
@@ -123,17 +117,17 @@ export class BuffController extends Component {
     {
         for(let i = 0; i < this.buffBtns.length; i++){
             //根據選項buff量顯示buff按鈕
-            if(this.buffNum > i){
+            if(GameModel.getBuff(EBuffType.BD_BUFFNUM) > i && i < this.buffList.length){
                 this.buffBtns[i].active = true;
-                this.buffBtns[i].setPosition(this.buffSpace * (this.buffNum - 1) * (-0.5) + i * this.buffSpace, 0, 0); //位置平均分散設定
+                this.buffBtns[i].setPosition(this.buffSpace * (GameModel.getBuff(EBuffType.BD_BUFFNUM) - 1) * (-0.5) + i * this.buffSpace, 0, 0); //位置平均分散設定
                 this.buffLabels[i].string = BUFF_TEXT[this.buffList[i]];
                 let atlas_id = this.buffList[i];
                 //變更選項數量的圖示根據選項數量顯示
                 if(this.buffList[i] == EBuffUIType.BU_LESS_BUFF){
-                    atlas_id = EBuffUIType.BU_BUFF_START + (this.buffNum - 1);
+                    atlas_id = EBuffUIType.BU_BUFF_START + (GameModel.getBuff(EBuffType.BD_BUFFNUM) - 1);
                 }
                 else if(this.buffList[i] == EBuffUIType.BU_MORE_BUFF){
-                    atlas_id = EBuffUIType.BU_BUFF_START + (this.buffNum + 1);
+                    atlas_id = EBuffUIType.BU_BUFF_START + (GameModel.getBuff(EBuffType.BD_BUFFNUM) + 1);
                 }
                 this.buffSprites[i].spriteFrame = this.buffAtlas.getSpriteFrame("" + atlas_id);
             }
@@ -143,9 +137,9 @@ export class BuffController extends Component {
         }
         //根據持有刷新buff數顯示刷新buff按鈕與次數
         if(this.refreshBtn){
-            this.refreshBtn.active = this.refreshNum > 0;
+            this.refreshBtn.active = GameModel.getBuff(EBuffType.BD_REFRESH) > 0;
             if(this.freshLabel){
-                this.freshLabel.string = '' + this.refreshNum;
+                this.freshLabel.string = '' + GameModel.getBuff(EBuffType.BD_REFRESH);
             }
         }
     }
@@ -159,7 +153,7 @@ export class BuffController extends Component {
     //刷新buff
     onRefreshClick()
     {
-        this.refreshNum -= 1;
+        GameModel.decreaseBuff(EBuffType.BD_REFRESH);
         this.generateBuffList();
         this.showBuffBtn();
     }
@@ -184,6 +178,9 @@ export class BuffController extends Component {
     //選擇指定buff
     setBuff(_id:number)
     {
+        if (_id < 0 || _id >= this.buffList.length) {
+            return;
+        }
         let type:EBuffUIType = this.buffList[_id];
         switch(type){
             case EBuffUIType.BU_GROW_DEC:
@@ -223,13 +220,13 @@ export class BuffController extends Component {
                 this.showBuffBtn();
                 return;
             case EBuffUIType.BU_LESS_BUFF:
-                this.buffNum -= 1;
-                this.refreshNum += 1;
+                GameModel.decreaseBuff(EBuffType.BD_BUFFNUM);
+                GameModel.addBuff(EBuffType.BD_REFRESH);
                 this.buffList.splice(_id, 1);
                 this.showBuffBtn();
                 return;
             case EBuffUIType.BU_MORE_BUFF:
-                this.buffNum += 1;
+                GameModel.addBuff(EBuffType.BD_BUFFNUM);
                 [this.buffList[_id], this.buffList[this.buffList.length - 1]] = [this.buffList[this.buffList.length - 1], this.buffList[_id]]
                 this.showBuffBtn();
                 return;
@@ -286,10 +283,10 @@ export class BuffController extends Component {
                 this.buffList.push(EBuffUIType.BU_CANNOT_ROTATE);
             }
         }
-        if(this.buffNum > 1){
+        if(GameModel.getBuff(EBuffType.BD_BUFFNUM) > 1){
             this.buffList.push(EBuffUIType.BU_LESS_BUFF);
         }
-        if(this.buffNum < MAX_BUFF_NUM){
+        if(GameModel.getBuff(EBuffType.BD_BUFFNUM) < MAX_BUFF_NUM){
             this.buffList.push(EBuffUIType.BU_MORE_BUFF);
         }
         this.buffList.push(EBuffUIType.BU_REFRESH);
@@ -309,6 +306,4 @@ export class BuffController extends Component {
     private buffLabels:Label[] = [];
     private buffSprites:Sprite[] = [];
     private buffList:EBuffUIType[] = []; //符合加入至隨機列表的buff
-    private buffNum:number = 2;    //buff選項數
-    private refreshNum:number = 0; //buff刷新數
 }
