@@ -293,7 +293,7 @@ export class GameController extends Component {
             this.puzzleCtrl?.onPlacePuzzleCallback(null);
             return;
         }
-        let puzzle_id = parseInt(_name);  //傳入拼圖id字串改為數字
+        let puzzle_id = parseInt(_name); //傳入拼圖id字串改為數字
         //放上拼圖成功回傳結果, 更新棋盤資訊
         for(let i = 0; i < _fit_cell.length; i++){
             let [x, y] = _fit_cell[i];
