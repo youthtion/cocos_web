@@ -1,4 +1,4 @@
-import { _decorator, Component, Camera, RenderTexture } from 'cc';
+import { _decorator, Component, Camera, RenderTexture, Animation, CCInteger } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('ScreenshotController')
@@ -6,6 +6,10 @@ export class ScreenshotController extends Component {
 
     @property(Camera)
     private screenshotCamera:Camera|null = null; //只照GAME層的相機(無UI)
+    @property({type:Animation})
+    private tipAnim:Animation|null = null;
+    @property({type:CCInteger, min:1})
+    private tipTimeLength:number = 1;
 
     start() {}
 
@@ -34,15 +38,20 @@ export class ScreenshotController extends Component {
             }
         }
         ctx.putImageData(img, 0, 0);
-        canvas.toBlob(this.toBlobCallBack, 'image/png');
-    }
-
-    //複製到剪貼簿
-    async toBlobCallBack(_blob:Blob)
-    {
-        if(_blob){
-            await navigator.clipboard.write([new ClipboardItem({'image/png':_blob})]);
-        }
+        canvas.toBlob(
+            //複製到剪貼簿(因用到this.tipAnim改用箭頭函式)
+            async (_blob:Blob) => {
+                if(_blob){
+                    await navigator.clipboard.write([new ClipboardItem({'image/png':_blob})]);
+                    //等待複製成功播放提示
+                    if(this.tipAnim){
+                        let state = this.tipAnim.getState('fadeOut');
+                        state.speed = state.duration / this.tipTimeLength;
+                        this.tipAnim.play('fadeOut');
+                    }
+                }
+            }
+            , 'image/png');
     }
 }
 

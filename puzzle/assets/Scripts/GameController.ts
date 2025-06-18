@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Prefab, instantiate, Sprite, Label, EditBox, Color } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Sprite, Label, EditBox, Color, Animation, CCInteger } from 'cc';
 import { CELL_WIDTH, ADD_NEAR_RATE, EGameState, EGameEvents, EBuffType, GameModel } from './GameModel'
 import { PuzzleController } from './PuzzleController'
 import { BuffController } from './BuffController'
@@ -36,6 +36,10 @@ export class GameController extends Component {
     private shareEdit:EditBox|null = null;
     @property({type:Node})
     private screenshotBtn:Node|null = null;
+    @property({type:Animation})
+    private tipAnim:Animation|null = null;
+    @property({type:CCInteger, min:1})
+    private tipTimeLength:number = 1;
 
     start()
     {
@@ -345,6 +349,12 @@ export class GameController extends Component {
     {
         if(this.shareEdit){
             await navigator.clipboard.writeText(this.shareEdit.string);
+            //等待複製成功播放提示
+            if(this.tipAnim){
+                let state = this.tipAnim.getState('fadeOut');
+                state.speed = state.duration / this.tipTimeLength;
+                this.tipAnim.play('fadeOut');
+            }
         }
     }
 
